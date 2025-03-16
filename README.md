@@ -1,4 +1,4 @@
-# Copperx Telegram Bot
+# Copperx Payout Bot
 
 A Telegram bot for Copperx Payout that allows users to
 
@@ -26,8 +26,8 @@ A Telegram bot for Copperx Payout that allows users to
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/copperx-telegram-bot.git
-cd copperx-telegram-bot
+git clone https://github.com/patoski-patoski/copperx-payout-bot.git
+cd copperx-payout-bot
 ```
 
 1. Install dependencies:

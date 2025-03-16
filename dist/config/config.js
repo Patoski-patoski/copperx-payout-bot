@@ -11,9 +11,9 @@ exports.config = {
         botToken: process.env.TELEGRAM_BOT_TOKEN || '',
     },
     copperx: {
-        apiBaseUrl: process.env.COPPERX_API_BASE_URL || 'https://income-api.copperx.io',
-        pusherKey: process.env.COPPERX_PUSHER_KEY || 'e089376087cac1a62785',
-        pusherCluster: process.env.COPPERX_PUSHER_CLUSTER || 'ap1',
+        apiBaseUrl: process.env.COPPERX_API_BASE_URL,
+        pusherKey: process.env.COPPERX_PUSHER_KEY,
+        pusherCluster: process.env.COPPERX_PUSHER_CLUSTER,
     },
     app: {
         port: process.env.PORT || 3000,

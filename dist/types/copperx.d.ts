@@ -8,8 +8,9 @@ export interface CopperxAuthResponse {
         firstName: string | null;
         lastName: string | null;
         email: string;
-        status: string;
-        role: string;
+        status: 'pending' | 'approved' | 'suspended';
+        type: 'individual' | 'business';
+        role: 'owner' | 'user' | 'admin' | 'member';
         relayerAddress: string;
         organizationId: string;
         walletAddress: string;
@@ -19,10 +20,20 @@ export interface CopperxAuthResponse {
     };
 }
 export interface CopperxUser {
-    id: string;
+    id: string | null;
+    status: 'pending' | 'active' | 'suspended';
+    firstName: string | null;
+    lastName: string | null;
     email: string;
-    organizationId: string;
-    kycStatus: 'pending' | 'approved' | 'rejected';
+    profileImage: string | null;
+    organizationId: string | null;
+    role: 'owner' | 'user' | 'admin' | 'member';
+    type: 'individual' | 'business';
+    relayerAddress: string;
+    flags: string[];
+    walletAddress: string;
+    walletId: string;
+    walletAccountType: string;
 }
 export interface CopperxWallet {
     id: string;
@@ -44,7 +55,7 @@ export interface CopperxTransaction {
     network: string;
 }
 export interface CopperxApiError {
-    message: {};
+    message: Record<string, any> | string;
     statusCode: number;
     error?: string;
 }

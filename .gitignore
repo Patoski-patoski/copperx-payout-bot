@@ -4,3 +4,4 @@ node_modules
 .env.development
 .env.production
 file.txt
+bot.mjs

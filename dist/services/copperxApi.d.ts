@@ -3,11 +3,14 @@ import { EmailOtpResponse } from '../types/index';
 export declare class CopperxApiService {
     private api;
     private token;
-    private sessionId;
+    private readonly MAX_RETRIES;
+    private readonly RETRY_DELAY;
     constructor();
-    setToken(token: string): void;
-    setSessionId(sessionId: string): void;
+    private retry;
+    private isRetryableError;
+    private setToken;
     requestEmailOtp(email: string): Promise<EmailOtpResponse>;
+    private formatError;
     verifyEmailOtp(email: string, otp: string, sid: string): Promise<CopperxAuthResponse>;
     getUserProfile(): Promise<CopperxUser>;
     getWallets(): Promise<CopperxWallet[]>;
