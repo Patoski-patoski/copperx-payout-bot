@@ -5,8 +5,7 @@ dotenv.config();
 
 
 // Replace with your bot's token from BotFather
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN
-  || "7666006531:AAEE1yhYGKHdda6Yr_rYc48ZwazFGGFmKpo";
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 // Create a bot that uses polling to fetch new updates
 const bot = new TelegramBot(TOKEN, { polling: true });
