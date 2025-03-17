@@ -6,6 +6,7 @@ export declare class BotHandler {
     private readonly BOT_MESSAGES;
     constructor();
     private setupCommands;
+    private handleKyc;
     private handleProfile;
     private formatStatus;
     private setupCallbackHandlers;

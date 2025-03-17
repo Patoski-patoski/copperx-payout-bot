@@ -12,5 +12,7 @@ export declare class SessionManager {
     isAuthenticated(chatId: number): boolean;
     setOrganizationId(chatId: number, organizationId: string): void;
     getOrganizationId(chatId: number): string | null;
+    setUserId(chatId: number, userId: string): void;
+    getUserId(chatId: number): string | null;
     clearSession(chatId: number): void;
 }

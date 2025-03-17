@@ -105,13 +105,11 @@ class CopperxApiService {
     async verifyEmailOtp(email, otp, sid) {
         return this.retry('Verify Email OTP', async () => {
             try {
-                console.log('Attempting OTP verification...', { email, sid });
                 const response = await this.api.post('/api/auth/email-otp/authenticate', {
                     email: email.trim(),
                     otp: otp.trim(),
                     sid
                 });
-                console.log('OTP verification response:', response.data);
                 if (response.data.accessToken) {
                     this.setToken(response.data.accessToken);
                     return response.data;
@@ -138,6 +136,31 @@ class CopperxApiService {
                 });
                 throw new Error(error.message ||
                     'Failed to get user profile. Please try again later.');
+            }
+        });
+    }
+    async getKycStatus() {
+        return this.retry('Get KYC Status', async () => {
+            try {
+                const response = await this.api.get(`/api/kycs`);
+                if (!response.data)
+                    throw new Error('No KYC data received');
+                return response.data;
+            }
+            catch (error) {
+                console.error("Failed to get KYC status:", {
+                    statusCode: error.statusCode,
+                    error: error.error,
+                    message: error.message,
+                });
+                // Handle specific error cases
+                if (error.response?.status === 404) {
+                    throw new Error('KYC information not found. Please complete KYC verification.');
+                }
+                if (error.response?.status === 401) {
+                    throw new Error('Authentication expired. Please login again.');
+                }
+                throw this.formatError(error);
             }
         });
     }

@@ -62,6 +62,21 @@ class SessionManager {
     getOrganizationId(chatId) {
         return this.sessions.get(chatId)?.organizationId || null;
     }
+    // set the user id of the session
+    setUserId(chatId, userId) {
+        const session = this.sessions.get(chatId)
+            || { chatId, state: 'AUTHENTICATED' };
+        console.log('Setting user ID:', userId);
+        console.log('Session:', session);
+        if (session) {
+            session.userId = userId;
+            this.sessions.set(chatId, session);
+        }
+    }
+    // get the user id of the session
+    getUserId(chatId) {
+        return this.sessions.get(chatId)?.userId || null;
+    }
     // clear the session
     clearSession(chatId) {
         this.sessions.delete(chatId);

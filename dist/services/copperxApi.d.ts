@@ -13,6 +13,7 @@ export declare class CopperxApiService {
     private formatError;
     verifyEmailOtp(email: string, otp: string, sid: string): Promise<CopperxAuthResponse>;
     getUserProfile(): Promise<CopperxUser>;
+    getKycStatus(): Promise<any>;
     getWallets(): Promise<CopperxWallet[]>;
     getWalletBalances(): Promise<CopperxWallet[]>;
     setDefaultWallet(walletId: string): Promise<{

@@ -7,6 +7,7 @@ interface UserSession {
     sid?: string;
     token?: string;
     organizationId?: string;
+    userId?: string;
 }
 
 export class SessionManager {
@@ -81,6 +82,23 @@ export class SessionManager {
     // get the organization id of the session
     getOrganizationId(chatId: number): string | null {
         return this.sessions.get(chatId)?.organizationId || null;
+    }
+
+    // set the user id of the session
+    setUserId(chatId: number, userId: string) {
+        const session = this.sessions.get(chatId)
+            || { chatId, state: 'AUTHENTICATED' };
+        console.log('Setting user ID:', userId);
+        console.log('Session:', session);
+        if (session) {
+            session.userId = userId;
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    // get the user id of the session
+    getUserId(chatId: number): string | null {
+        return this.sessions.get(chatId)?.userId || null;
     }
 
    

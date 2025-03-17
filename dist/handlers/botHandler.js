@@ -44,7 +44,6 @@ status: %status%
 type: %type%
 relayerAddress: %relayerAddress%
 flags: [%flags%]
-organizationId: \`%organizationId%\`
 walletAddress: \`%walletAddress%\`
 walletId: %walletId%
 walletAccountType: \`%walletAccountType%\``,
@@ -59,6 +58,18 @@ You can now:
 - Use /logout to logout from your account.
 
 Need support? Visit https://t.me/copperxcommunity/2183`,
+            KYC_NOT_AUTHENTICATED: '❌ Please login first using /login to view your KYC status',
+            KYC_STATUS_TEMPLATE: `🔒 *KYC Verification Status*
+status: %status%
+type: %type%`,
+            KYC_REDIRECT_PLATFROM: `🔒 *KYC Verification Required*
+
+To complete your KYC verification:
+1. Click the button below to go to the Copperx platform
+2. Complete the verification process
+3. Return here and check your status with /kyc
+
+Need help? Contact support: https://t.me/copperxcommunity/2183`,
         };
         this.bot = new node_telegram_bot_api_1.default(config_1.config.telegram.botToken, {
             polling: {
@@ -78,6 +89,7 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
             { command: /\/login/, handler: this.handleLogin },
             { command: /\/logout/, handler: this.handleLogout },
             { command: /\/profile/, handler: this.handleProfile },
+            { command: /\/kyc/, handler: this.handleKyc },
             // { command: /\/balance/, handler: this.handleBalance },
             // { command: /\/send/, handler: this.handleSend },
             // { command: /\/history/, handler: this.handleHistory },
@@ -86,6 +98,86 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
         commands.forEach(({ command, handler }) => {
             this.bot.onText(command, handler.bind(this));
         });
+    }
+    // Handle KYC command
+    async handleKyc(msg) {
+        const { chat: { id: chatId } } = msg;
+        if (!this.sessions.isAuthenticated(chatId)) {
+            await this.bot.sendMessage(chatId, this.BOT_MESSAGES.KYC_NOT_AUTHENTICATED);
+            return;
+        }
+        try {
+            const loadingMessage = await this.bot.sendMessage(chatId, ' 🔄 Checking your KYC status...');
+            const userId = this.sessions.getUserId(chatId);
+            if (!userId) {
+                throw new Error('User ID not found in session. Please login again.');
+            }
+            const kycResponse = await this.api.getKycStatus();
+            await this.bot.deleteMessage(chatId, loadingMessage.message_id);
+            // If KYC is not approved, send redirect message
+            if (!kycResponse || !kycResponse.data[0]) {
+                await this.bot.sendMessage(chatId, this.BOT_MESSAGES.KYC_REDIRECT_PLATFROM, {
+                    parse_mode: 'Markdown',
+                    disable_web_page_preview: true,
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{
+                                    text: '🔗 Start/Complete KYC on Copperx Platform',
+                                    url: 'https://payout.copperx.io/app/kyc'
+                                }],
+                        ]
+                    }
+                });
+                return;
+            }
+            const kycStatus = kycResponse.data[0];
+            console.log('KYC status:', kycStatus);
+            const isApproved = kycStatus.status.toLowerCase() === 'approved';
+            console.log('Is approved:', isApproved);
+            if (isApproved) {
+                await this.bot.sendMessage(chatId, '🎉 Your KYC verification has been approved!', { parse_mode: 'Markdown' });
+                return;
+            }
+            const kycMessage = this.BOT_MESSAGES.KYC_STATUS_TEMPLATE
+                .replace('%status%', `${kycStatus.status.toUpperCase()}`)
+                .replace('%type%', kycStatus.type === 'approved'
+                ? '✅ Approved'
+                : `Your KYC is not approved yet, It's ${kycStatus.status}`);
+            await this.bot.sendMessage(chatId, kycMessage, {
+                parse_mode: 'Markdown',
+            });
+            // Handle non-approved status
+            if (!isApproved) {
+                await this.bot.sendMessage(chatId, this.BOT_MESSAGES.KYC_REDIRECT_PLATFROM, {
+                    parse_mode: 'Markdown',
+                    disable_web_page_preview: true,
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{
+                                    text: '🔗 Complete KYC on Copperx Platform',
+                                    url: 'https://payout.copperx.io/app/kyc'
+                                }],
+                            [{
+                                    text: '🔄 Check KYC Status Again',
+                                    callback_data: 'check_kyc_status'
+                                }]
+                        ]
+                    }
+                });
+                await this.bot.sendMessage(chatId, '⚠️ Your access is currently limited.' +
+                    'Complete KYC verification to unlock all features.');
+                return;
+            }
+            else {
+                // Handle approved status
+                await this.bot.sendMessage(chatId, '✅ Your KYC is approved. You have full access to all features.');
+            }
+        }
+        catch (error) {
+            console.error('KYC status check error:', error);
+            await this.bot.sendMessage(chatId, `❌ Error: ${error.message
+                || 'Failed to fetch KYC status. Please try again later.'}`);
+        }
     }
     async handleProfile(msg) {
         const { chat: { id: chatId } } = msg;
@@ -149,6 +241,11 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
                 return;
             const chatId = callbackQuery.message.chat.id;
             const messageId = callbackQuery.message.message_id;
+            if (callbackQuery.data === 'check_kyc_status') {
+                await this.bot.answerCallbackQuery(callbackQuery.id);
+                await this.handleKyc(callbackQuery.message);
+                return;
+            }
             if (callbackQuery.data === 'refresh_profile') {
                 // Acknwoledge the callback
                 await this.bot.answerCallbackQuery(callbackQuery.id);
@@ -160,16 +257,10 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
                     const profile = await this.api.getUserProfile();
                     // Update message with new profile data
                     const kycStatus = profile.status?.toUpperCase() || 'NOT SUBMITTED';
-                    const statusEmoji = {
-                        'APPROVED': '✅',
-                        'PENDING': '⏳',
-                        'REJECTED': '❌',
-                        'NOT SUBMITTED': '📝'
-                    }[kycStatus] || '❓';
                     const profileMessage = this.BOT_MESSAGES.PROFILE_TEMPLATE
                         .replace('%id%', profile.id || 'N/A')
                         .replace('%email%', profile.email || 'Not provided')
-                        .replace('%status%', statusEmoji + ' ' + profile.status)
+                        .replace('%status%', this.formatStatus(profile.status))
                         .replace('%firstName%', profile.firstName || 'Not provided')
                         .replace('%lastName%', profile.lastName || 'Not provided')
                         .replace('%profileImage%', profile.profileImage || 'Not provided')
@@ -181,10 +272,6 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
                         .replace('%walletAddress%', profile.walletAddress || 'Not set')
                         .replace('%walletId%', profile.walletId || 'Not set')
                         .replace('%walletAccountType%', profile.walletAccountType || 'Not set');
-                    console.log("Status: ", statusEmoji);
-                    console.log("Organization ID: ", profile.organizationId);
-                    console.log("Role: ", profile.role);
-                    console.log("Type: ", profile.type);
                     await this.bot.editMessageText(profileMessage, {
                         chat_id: chatId,
                         message_id: messageId,
@@ -210,6 +297,7 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
             }
         });
     }
+    // Handle message handlers
     setupMessageHandlers() {
         this.bot.on('message', async (msg) => {
             const { chat: { id: chatId }, text } = msg;
@@ -229,10 +317,12 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
             }
         });
     }
+    // Handle start command
     async handleStart(msg) {
         const { chat: { id: chatId } } = msg;
         await this.bot.sendMessage(chatId, this.BOT_MESSAGES.WELCOME, { parse_mode: 'Markdown' });
     }
+    // Handle login command
     async handleLogin(msg) {
         const { chat: { id: chatId } } = msg;
         // Check if user is already logged in
@@ -253,6 +343,7 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
         this.sessions.clearSession(chatId);
         await this.bot.sendMessage(chatId, this.BOT_MESSAGES.LOGOUT_SUCCESS);
     }
+    // Handle email input
     async handleEmailInput(chatId, email) {
         if (!email.match(this.EMAIL_REGEX)) {
             await this.bot.sendMessage(chatId, this.BOT_MESSAGES.INVALID_EMAIL);
@@ -272,6 +363,7 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
             this.sessions.setState(chatId, 'WAITING_EMAIL');
         }
     }
+    // Handle OTP input
     async handleOtpInput(chatId, otp) {
         if (otp.length !== 6) {
             await this.bot.sendMessage(chatId, this.BOT_MESSAGES.INVALID_OTP);
@@ -288,6 +380,7 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
             await this.bot.sendMessage(chatId, `❌ Error: ${error.message || 'Failed to verify OTP. Please try again.'}`);
         }
     }
+    // Get session data
     getSessionData(chatId) {
         const email = this.sessions.getEmail(chatId);
         const sid = this.sessions.getSid(chatId);
@@ -296,11 +389,14 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
         }
         return [email, sid];
     }
+    // Update session after login
     updateSessinAfterLogin(chatId, authResponse) {
         this.sessions.setToken(chatId, authResponse.accessToken);
         this.sessions.setState(chatId, 'AUTHENTICATED');
         this.sessions.setOrganizationId(chatId, authResponse.user.organizationId);
+        this.sessions.setUserId(chatId, authResponse.user.id);
     }
+    // Handle balance command
     async handleBalance(msg) {
         const chatId = msg.chat.id;
     }
