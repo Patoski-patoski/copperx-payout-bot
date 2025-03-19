@@ -88,8 +88,6 @@ export class SessionManager {
     setUserId(chatId: number, userId: string) {
         const session = this.sessions.get(chatId)
             || { chatId, state: 'AUTHENTICATED' };
-        console.log('Setting user ID:', userId);
-        console.log('Session:', session);
         if (session) {
             session.userId = userId;
             this.sessions.set(chatId, session);

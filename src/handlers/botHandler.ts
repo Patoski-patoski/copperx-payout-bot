@@ -2,7 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import { config } from '../config/config';
 import { CopperxApiService } from '../services/copperxApi';
 import { SessionManager } from '../utils/sessionManager';
-import { CopperxAuthResponse } from '@/types/copperx';
+import { CopperxAuthResponse, CopperxTransaction, CopperxWallet, CopperxWalletBalance } from '@/types/copperx';
 
 export class BotHandler {
     private readonly bot: TelegramBot;
@@ -68,7 +68,25 @@ To complete your KYC verification:
 2. Complete the verification process
 3. Return here and check your status with /kyc
 
+
 Need help? Contact support: https://t.me/copperxcommunity/2183`,
+        WALLET_NOT_AUTHENTICATED: '❌ Please login first using /login to access wallet features',
+        WALLET_BALANCE_TEMPLATE: `💰 *Wallet Balances*
+%balances%
+WalletId: %walletId%
+Network: %network%
+Walletaddress: %walletAddress%
+Balance: %balance%
+Symbol: %symbol%`,
+        TRANSACTION_TEMPLATE: `🔄 *Transaction*
+Type: %type%
+Amount: %amount% %asset%
+Status: %status%
+Network: %network%
+Date: %date%
+From: \`%from%\`
+To: \`%to%\`
+%hash%`,
 
     };
 
@@ -93,15 +111,157 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
             { command: /\/logout/, handler: this.handleLogout },
             { command: /\/profile/, handler: this.handleProfile },
             { command: /\/kyc/, handler: this.handleKyc },
-            // { command: /\/balance/, handler: this.handleBalance },
+            { command: /\/wallets/, handler: this.handleWallets },
+            { command: /\/history/, handler: this.handleHistory },
+            { command: /\/balance/, handler: this.handleBalance },
             // { command: /\/send/, handler: this.handleSend },
-            // { command: /\/history/, handler: this.handleHistory },
             // { command: /\/help/, handler: this.handleHelp },
         ];
 
         commands.forEach(({ command, handler }) => {
             this.bot.onText(command, handler.bind(this));
         });
+    }
+
+
+    private async handleWallets(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+
+        if (!this.sessions.isAuthenticated(chatId)) {
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED
+            );
+            return;
+        }
+
+        try {
+            const loadingMessage = await this.bot.sendMessage(
+                chatId,
+                ' 🔄 Fetching your wallets...'
+            );
+            let wallets: CopperxWallet[] = [];
+            try {
+                wallets = await this.api.getWallets();
+            } catch (error: any) {
+                console.error('Error in fetching wallets:', error);
+                await this.bot.deleteMessage(chatId, loadingMessage.message_id);
+                await this.bot.sendMessage(
+                    chatId,
+                    `Error: ${error.message
+                    || 'Failed to fetch wallets. Please try again later.'}`
+                );
+            }
+
+            // Map network IDs to readable names
+            const networkNames: { [key: string]: string } = {
+                '1': 'Ethereum',
+                '137': 'Polygon',
+                '42161': 'Arbitrum',
+                '8453': 'Base',
+                '23434': 'Test Network'
+            };
+
+            const walletList = wallets.map((wallet: CopperxWallet, index: number) => {
+                const networkName = networkNames[wallet.network]
+                    || `Network ${wallet.network}`;
+                const networkEmoji = {
+                    'Ethereum': '⧫',
+                    'Polygon': '⬡',
+                    'Arbitrum': '🔵',
+                    'Base': '🟢',
+                    'Test Network': '🔧'
+                }[networkName] || '🌐';
+
+                const defaultStatus = wallet.isDefault ? '✅ Default' : '';
+                return `*Wallet #${index + 1}* ${defaultStatus}\n` +
+                    `${networkEmoji} ${networkName}\n` +
+                    `💼 Type: \`${wallet.walletType}\`\n` +
+                    `📝 Address: \`${wallet.walletAddress}\``;
+            }).join('\n\n───────────────\n\n');
+
+            await this.bot.deleteMessage(chatId, loadingMessage.message_id);
+            await this.bot.sendMessage(chatId,
+                `👛 *Your Wallets:*\n\n ${walletList}`, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{
+                            text: '🔄 Refresh Wallets',
+                            callback_data: 'refresh_wallets'
+                        }],
+                        [{
+                            text: '💰 View Balances',
+                            callback_data: 'view_balances'
+                        }]
+                    ]
+                }
+            }).catch(error => {
+                console.error('Error sending wallet message:', error);
+                this.bot.sendMessage(chatId, 'Opps.. Error displaying wallets. Please try again.');
+            });
+        } catch (error: any) {
+            console.error('Error in fetching wallets:', error);
+            await this.bot.sendMessage(
+                chatId,
+                `Opps: Failed to fetch wallets. Please try again`
+            );
+        }
+    }
+
+
+
+    private async handleHistory(msg: TelegramBot.Message) { 
+        const { chat: { id: chatId } } = msg;
+
+        if(!this.sessions.isAuthenticated(chatId)) {
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED
+            );
+            return;
+        }
+
+        try {
+            const loadingMessage = await this.bot.sendMessage(
+                chatId,
+                ' 🔄 Fetching your transaction history...'
+            );
+            const transactions = await this.api.getTransactionsHistory();
+            console.log('Transactions:', transactions);
+
+            await this.bot.deleteMessage(chatId, loadingMessage.message_id);
+
+            // Send last 10 transactions
+            // const last10Transactions = transactions.slice(0, 10);
+            const transactionList = transactions.map((transaction) => {
+                return this.BOT_MESSAGES.TRANSACTION_TEMPLATE
+                    .replace('%type%', transaction.type)
+                    .replace('%amount%', transaction.amount)
+                    .replace('%status%', transaction.status)
+                    .replace('%network%', transaction.network)
+            }).join('\n\n');
+            
+            await this.bot.sendMessage(chatId,
+                `🔄 *Your Transaction History*\n\n ${transactionList}`, {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{
+                                text: '🔄 Refresh History',
+                                callback_data: 'refresh_history'
+                            }]
+                        ]
+                    }
+                }
+            );
+        } catch (error: any) {
+            console.error('Error in fetching transaction history:', error);
+            await this.bot.sendMessage(
+                chatId,
+                `Oops.. Failed to fetch transaction history. Please try again`
+            );
+        }
     }
 
     // Handle KYC command
@@ -153,9 +313,7 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
             }
 
             const kycStatus = kycResponse.data[0];
-            console.log('KYC status:', kycStatus);
             const isApproved = kycStatus.status.toLowerCase() === 'approved';
-            console.log('Is approved:', isApproved);
 
             if(isApproved) {
                 await this.bot.sendMessage(
@@ -218,8 +376,7 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
             console.error('KYC status check error:', error);
             await this.bot.sendMessage(
                 chatId,
-                `❌ Error: ${error.message
-                || 'Failed to fetch KYC status. Please try again later.'}`
+                `Oops.. Failed to fetch KYC status. Please try again`
             );
         }
     }
@@ -276,8 +433,7 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
             console.error('Error in handleProfile:', error);
             await this.bot.sendMessage(
                 chatId,
-                `❌ Error: ${error.message
-                || 'Failed to fetch profile. Please try again later.'}`
+                `Oops.. Failed to fetch profile. Please try again`
             );
         }
     }
@@ -301,12 +457,6 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
 
             const chatId = callbackQuery.message.chat.id;
             const messageId = callbackQuery.message.message_id;
-
-            if(callbackQuery.data === 'check_kyc_status') {
-                await this.bot.answerCallbackQuery(callbackQuery.id);
-                await this.handleKyc(callbackQuery.message);
-                return;
-            }
 
             if (callbackQuery.data === 'refresh_profile') {
                 // Acknwoledge the callback
@@ -353,12 +503,50 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
 
                 } catch (error: any) {
                     console.error('Error in refresh profile:', error);
-                    await this.bot.editMessageText(`❌ Error: ${error.message
-                        || 'Failed to refresh profile. Please try again later.'}`, {
+                    await this.bot.editMessageText(`Opps: ${error.message
+                        || 'Failed to refresh profile. Please try again'}`, {
                         chat_id: chatId,
                         message_id: messageId,
                     });
                 }
+            }
+            if (callbackQuery.data === 'refresh_balance') {
+                await this.bot.answerCallbackQuery(callbackQuery.id);
+                await this.handleBalance(callbackQuery.message);
+            }
+
+            if (callbackQuery.data === 'show_deposit') {
+                await this.bot.answerCallbackQuery(callbackQuery.id);
+                const defaultWallet = await this.api.getDefaultWallet();
+                if (!defaultWallet) {
+                    await this.bot.sendMessage(
+                        chatId,
+                        "You don't have a default wallet set up yet.");
+                } else {
+                    const wallets = await this.api.getWallets();
+                    const defaultWallet = wallets.find((w: CopperxWallet) => w.isDefault);
+                    await this.bot.sendMessage(
+                        chatId,
+                        `📥 *Deposit Address*\n\nNetwork: ${wallets[0].network}\n` +
+                        `Address: \`${wallets[0].walletAddress}\`\n\n` +
+                        '⚠️ Make sure to send funds on the correct network!', {
+                        parse_mode: 'Markdown'
+                    });
+                }
+            }
+
+            if (callbackQuery.data?.startsWith('set_default:')) {
+                const walletId = callbackQuery.data.replace('set_default:', '');
+                await this.api.setDefaultWallet(walletId);
+                await this.bot.answerCallbackQuery(callbackQuery.id, {
+                    text: '✅ Default wallet updated!'
+                });
+                await this.handleWallets(callbackQuery.message);
+            }
+
+            if (callbackQuery.data === 'check_kyc_status') {
+                await this.bot.answerCallbackQuery(callbackQuery.id);
+                await this.handleKyc(callbackQuery.message);
             }
         });
     }
@@ -458,7 +646,7 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
             console.error('Error in handleEmailInput:', error);
             await this.bot.sendMessage(
                 chatId,
-                `❌ Error: ${error.message
+                `OOps: ${error.message
                 || 'Failed to send OTP. Please try again later.'}`
             );
             this.sessions.setState(chatId, 'WAITING_EMAIL');
@@ -485,7 +673,7 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
             console.error('OTP verification error:', error);
             await this.bot.sendMessage(
                 chatId,
-                `❌ Error: ${error.message || 'Failed to verify OTP. Please try again.'}`
+                `Opps: ${error.message || 'Failed to verify OTP. Please try again.'}`
             );
         }
     }
@@ -512,25 +700,104 @@ Need help? Contact support: https://t.me/copperxcommunity/2183`,
     }
 
     // Handle balance command
+   
     private async handleBalance(msg: TelegramBot.Message) {
         const chatId = msg.chat.id;
-   
+
+        // Check if user is authenticated
+        if (!this.sessions.isAuthenticated(chatId)) {
+            await this.bot.sendMessage(chatId,
+                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED
+            );
+            return;
+        }
+        try {
+            const loadingMessage = await this.bot.sendMessage(chatId,
+                '🔄 Fetching balances...');
+            
+            const balances = await this.api.getWalletBalances();
+            if (!balances || balances.length === 0) {
+                console.log('No balances found for your wallets.');
+                console.log('balances', balances);
+                
+                await this.bot.editMessageText('No balances found for your wallets.', {
+                    chat_id: chatId,
+                    message_id: loadingMessage.message_id
+                });
+                return;
+            }
+
+            // Map network IDs to readable names
+            const networkNames: { [key: string]: string } = {
+                '1': 'Ethereum',
+                '137': 'Polygon',
+                '42161': 'Arbitrum',
+                '8453': 'Base',
+                '23434': 'Test Network'
+            };
+
+
+            console.log('balances', balances);
+            console.log('balances[0]', balances[0]);
+
+            await this.bot.deleteMessage(chatId, loadingMessage.message_id);
+
+            // Send a header message
+            await this.bot.sendMessage(chatId, '💰 Wallet Balances', {
+                parse_mode: 'Markdown'
+            });
+
+            for (const wallet of balances) {
+                const networkName = networkNames[wallet.network]
+                    || `Network ${wallet.network}`;
+                
+                // Map symbols to emojis
+                const symbolEmojis: { [key: string]: string } = {
+                    'USDC': '💵',
+                    'ETH': '⧫',
+                    'MATIC': '⬡',
+                    'USDT': '💲',
+                    'DAI': '🔶'
+                };
+                
+                const networkEmoji = {
+                    'Ethereum': '⧫',
+                    'Polygon': '⬡',
+                    'Arbitrum': '🔵',
+                    'Base': '🟢',
+                    'Test Network': '🔧'
+                }[networkName] || '🌐';
+
+                // Format wallet address for display
+                const walletAddress = wallet.balances[0]?.address || '';
+                // Create balance items display
+                const balanceItems = wallet.balances.map(b => {
+                    const emoji = symbolEmojis[b.symbol] || '🪙';
+                    return `${emoji} *${b.symbol}*: ${b.balance}`;
+                }).join('\n');
+
+                const walletMessage =
+                    `*Wallet Details*\n\n` +
+                    `🆔 ID: \`${wallet.walletId}\`\n` +
+                    `${networkEmoji} Network: \`${networkName}\`\n` +
+                    `📝 Address: \`${walletAddress}\`\n\n` +
+                    `*Balances*\n${balanceItems || '(No tokens found)'}`;
+                
+                await this.bot.sendMessage(chatId, walletMessage, {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [[{
+                            text: '🔄 Refresh Balances',
+                            callback_data: 'refresh_balance'
+                        }]]
+                    }
+                });
+            }
+        } catch (error: any) {
+            console.error('Error fetching balances:', error);
+            await this.bot.sendMessage(
+                chatId, `OOps: Failed to fetch balances. Please try again.`);
+        }
+
     }
-   
-    // private async handleBalance(msg: TelegramBot.Message) {
-    //     const chatId = msg.chat.id;
-
-    //     // Check if user is authenticated
-    //     if (!this.sessions.isAuthenticated(chatId)) {
-    //         await this.bot.sendMessage(chatId, 'Please login first using /login command.');
-    //         return;
-    //     }
-
-    //     // Fetch balance from API
-    //     const balance = await this.api.getBalance(this.sessions.getSession(chatId).token);
-
-    //     await this.bot.sendMessage(chatId, `Your balance is: ${balance}`);
-    // }
-
-    // Add more handler methods...
 } 

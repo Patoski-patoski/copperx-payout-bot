@@ -38,12 +38,32 @@ export interface CopperxUser {
 }
 
 export interface CopperxWallet {
-    id: string;
-    address: string;
-    network: string;
-    isDefault: boolean;
-    balance: string;
-    currency: string;
+    id: string,
+    createdAt: string,
+    updatedAt: string,
+    organizationId: string,
+    walletType: string,
+    network: string,
+    walletAddress: string,
+    isDefault: boolean
+}
+
+export interface CopperxWalletBalance {
+    walletId: string,
+    isDefault: boolean,
+    network: string,
+    balances: [
+        {
+            symbol: string,
+            balance: string,
+            decimals: number,
+            address: string
+        }
+    ],
+}
+
+export interface CopperxWalletDefault {
+    walletId: string
 }
 
 export interface CopperxTransaction {
@@ -86,6 +106,8 @@ export interface CopperxApiError {
 // export interface KycResponse {
 //     data: KycStatus;
 // }
+
+
 
 export interface PusherDepositEvent {
     amount: string;

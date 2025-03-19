@@ -6,6 +6,8 @@ import {
   CopperxWallet,
   CopperxTransaction,
   CopperxApiError,
+  CopperxWalletBalance,
+  CopperxWalletDefault, 
 } from '../types/copperx';
 
 import {
@@ -17,7 +19,7 @@ export class CopperxApiService {
   private api: AxiosInstance;
   private token: string | null = null;
   private readonly MAX_RETRIES = 3;
-  private readonly RETRY_DELAY = 1000
+  private readonly RETRY_DELAY = 2000
 
   constructor() {
     this.api = axios.create({
@@ -151,7 +153,7 @@ export class CopperxApiService {
 
         throw new Error('Invalid or expired OTP');
       } catch (error: any) {
-        console.error('OTP verification failed:', error);
+        console.error('OTP verification failed:', error.message);
         throw this.formatError(error);
       }
     });
@@ -204,6 +206,9 @@ export class CopperxApiService {
     });
   }
 
+
+  // Wallets
+  // Get all wallets
   async getWallets(): Promise<CopperxWallet[]> {
     try {
       const response = await this.api.get('/api/wallets');
@@ -222,7 +227,7 @@ export class CopperxApiService {
     }
   }
 
-  async getWalletBalances(): Promise<CopperxWallet[]> {
+  async getWalletBalances(): Promise<CopperxWalletBalance[]> {
     try {
       const response = await this.api.get('/api/wallets/balances');
       return response.data;
@@ -240,12 +245,25 @@ export class CopperxApiService {
     }
   }
 
-  async setDefaultWallet(walletId: string): Promise<{ success: boolean }> {
-    const response = await this.api.post(`/api/wallets/default`, { walletId });
+  // Set default wallet
+  async setDefaultWallet(walletId: string): Promise<CopperxWalletDefault> {
+    const response = await this.api.post(
+      `/api/wallets/default`,
+      { walletId });
     return response.data;
   }
 
-  async getTransactions(page: number = 1, limit: number = 10): Promise<CopperxTransaction[]> {
+  // Get default wallet
+  async getDefaultWallet(): Promise<CopperxWalletDefault> {
+    const response = await this.api.get(
+      `/api/wallets/default`);
+    return response.data;
+  }
+
+  // Transactions
+  // Get all transactions
+  async getTransactionsHistory(page: number = 1, limit: number = 10):
+    Promise<CopperxTransaction[]> {
     try {
       const response = await this.api.get(`/api/transfers`, {
         params: { page, limit }
@@ -265,6 +283,7 @@ export class CopperxApiService {
     }
   }
 
+  // Send funds
   async sendFunds(params: {
     recipient: string;
     amount: string;
