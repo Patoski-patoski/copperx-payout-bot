@@ -311,7 +311,7 @@ Symbol: %symbol%`,
             const last10Transactions = transactions.data.slice(0, 10);
             if(last10Transactions.length === 0) {
                 await this.bot.sendMessage(chatId,
-                    'No transactions found.' +
+                    '📪 No transactions found.\n\n' +
                     'Please make a transaction to see your history.');
                 return;
             }
