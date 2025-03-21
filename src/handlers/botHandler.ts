@@ -2,7 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import { config } from '../config/config';
 import { CopperxApiService } from '../services/copperxApi';
 import { SessionManager } from '../utils/sessionManager';
-import { CopperxAuthResponse, CopperxTransaction, CopperxWallet, CopperxWalletBalance } from '@/types/copperx';
+import { CopperxAuthResponse, CopperxWallet } from '@/types/copperx';
 
 export class BotHandler {
     private readonly bot: TelegramBot;
@@ -50,10 +50,14 @@ walletAccountType: \`%walletAccountType%\``,
         LOGIN_SUCCESS: `✅ Login successful!
 
 You can now: 
-- Use /balance to check your wallet balance.
+- Use /balances to check your wallet balances.
+- Use /wallets to view your wallets.
+- Use /default to view your default wallet.
+- Use /kyc to check your KYC status.
 - Use /send to send funds.
 - Use /profile to view your Copperx information
 - Use /history to view your transaction history.
+- Use /help to show this help message.
 - Use /logout to logout from your account.
 
 Need support? Visit https://t.me/copperxcommunity/2183`,
@@ -78,16 +82,6 @@ Network: %network%
 Walletaddress: %walletAddress%
 Balance: %balance%
 Symbol: %symbol%`,
-        TRANSACTION_TEMPLATE: `🔄 *Transaction*
-Type: %type%
-Amount: %amount% %asset%
-Status: %status%
-Network: %network%
-Date: %date%
-From: \`%from%\`
-To: \`%to%\`
-%hash%`,
-
     };
 
     constructor() {
@@ -114,6 +108,8 @@ To: \`%to%\`
             { command: /\/wallets/, handler: this.handleWallets },
             { command: /\/history/, handler: this.handleHistory },
             { command: /\/balance/, handler: this.handleBalance },
+            { command: /\/default/, handler: this.handleDefault },
+            // { command: /\/balances/, handler: this.handleBalance },
             // { command: /\/send/, handler: this.handleSend },
             // { command: /\/help/, handler: this.handleHelp },
         ];
@@ -123,6 +119,42 @@ To: \`%to%\`
         });
     }
 
+    private async handleDefault(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+        const defaultWallet = await this.api.getDefaultWallet();
+        const networkEmoji = {
+            'Ethereum': '⧫',
+            'Polygon': '⬡',
+            'Arbitrum': '🔵',
+            'Base': '🟢',
+            'Test Network': '🔧'
+        }[defaultWallet.network] || '🌐';
+
+        const networkNames = {
+            '1': 'Ethereum',
+            '137': 'Polygon',
+            '42161': 'Arbitrum',
+            '8453': 'Base',
+            '23434': 'Test Network'
+        }[defaultWallet.network] || 'Unknown Network';
+
+        const defaultWalletMessage = `* 👛 Default Wallet*\n` +
+            `*Wallet ID*: ${defaultWallet.id}\n` +
+            `${networkEmoji} *Network*: ${networkNames}\n` +
+            `*Wallet Type*: ${defaultWallet.walletType}\n` +
+            `*Wallet Address*: ${defaultWallet.walletAddress}\n`;
+        await this.bot.sendMessage(chatId, defaultWalletMessage, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: 'Change Default Wallet',
+                        callback_data: 'change_default_wallet'
+                    }]
+                ]
+            }
+        });
+    }
 
     private async handleWallets(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
@@ -175,15 +207,61 @@ To: \`%to%\`
 
                 const defaultStatus = wallet.isDefault ? '✅ Default' : '';
                 return `*Wallet #${index + 1}* ${defaultStatus}\n` +
+                    `💰 *Wallet ID: ${wallet.id}\n` +
                     `${networkEmoji} ${networkName}\n` +
                     `💼 Type: \`${wallet.walletType}\`\n` +
                     `📝 Address: \`${wallet.walletAddress}\``;
+                
             }).join('\n\n───────────────\n\n');
 
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
+
+            // Send a header message
             await this.bot.sendMessage(chatId,
-                `👛 *Your Wallets:*\n\n ${walletList}`, {
-                parse_mode: 'Markdown',
+                '👛 *Your Wallets*',
+                { parse_mode: 'Markdown' });
+
+            // Send each wallet as a separate message with its own action button
+            for (const wallet of wallets) {
+                const networkName = networkNames[wallet.network]
+                    || `Network ${wallet.network}`;
+                const networkEmoji = {
+                    'Ethereum': '⧫',
+                    'Polygon': '⬡',
+                    'Arbitrum': '🔵',
+                    'Base': '🟢',
+                    'Test Network': '🔧'
+                }[networkName] || '🌐';
+
+                const defaultStatus = wallet.isDefault ? '✅ Default' : '';
+                const walletMessage = `*Wallet*: ${defaultStatus}\n` +
+                    `${networkEmoji} Network: \`${networkName}\`\n` +
+                    `💼 Type: \`${wallet.walletType}\`\n` +
+                    `📝 Address: \`${wallet.walletAddress}\``;
+
+                // Create different button based on default status
+                const buttonText = wallet.isDefault ?
+                    '✓ Default Wallet' :
+                    '⭐ Set Wallet as Default';
+
+                const buttonCallbackData = wallet.isDefault ?
+                    'already_default' :
+                    `set_default:${wallet.id}`;
+
+                await this.bot.sendMessage(chatId, walletMessage, {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [[{
+                            text: buttonText,
+                            callback_data: buttonCallbackData
+                        }]]
+                    }
+                });
+            }
+
+            // Add action buttons at the end
+            await this.bot.sendMessage(chatId,
+                '', {
                 reply_markup: {
                     inline_keyboard: [
                         [{
@@ -196,10 +274,8 @@ To: \`%to%\`
                         }]
                     ]
                 }
-            }).catch(error => {
-                console.error('Error sending wallet message:', error);
-                this.bot.sendMessage(chatId, 'Opps.. Error displaying wallets. Please try again.');
             });
+
         } catch (error: any) {
             console.error('Error in fetching wallets:', error);
             await this.bot.sendMessage(
@@ -208,7 +284,6 @@ To: \`%to%\`
             );
         }
     }
-
 
 
     private async handleHistory(msg: TelegramBot.Message) { 
@@ -233,17 +308,16 @@ To: \`%to%\`
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 
             // Send last 10 transactions
-            // const last10Transactions = transactions.slice(0, 10);
-            const transactionList = transactions.map((transaction) => {
-                return this.BOT_MESSAGES.TRANSACTION_TEMPLATE
-                    .replace('%type%', transaction.type)
-                    .replace('%amount%', transaction.amount)
-                    .replace('%status%', transaction.status)
-                    .replace('%network%', transaction.network)
-            }).join('\n\n');
+            const last10Transactions = transactions.data.slice(0, 10);
+            if(last10Transactions.length === 0) {
+                await this.bot.sendMessage(chatId,
+                    'No transactions found.' +
+                    'Please make a transaction to see your history.');
+                return;
+            }
             
             await this.bot.sendMessage(chatId,
-                `🔄 *Your Transaction History*\n\n ${transactionList}`, {
+                `🔄 *Your Transaction History*\n\n ${last10Transactions}`, {
                     parse_mode: 'Markdown',
                     reply_markup: {
                         inline_keyboard: [
@@ -458,96 +532,183 @@ To: \`%to%\`
             const chatId = callbackQuery.message.chat.id;
             const messageId = callbackQuery.message.message_id;
 
-            if (callbackQuery.data === 'refresh_profile') {
-                // Acknwoledge the callback
+            try {
                 await this.bot.answerCallbackQuery(callbackQuery.id);
+                if (callbackQuery.data === 'refresh_profile') {
+                    // Acknwoledge the callback
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    try {
+                        await this.bot.editMessageText(`🔄 Refresh Profile...`, {
+                            chat_id: chatId,
+                            message_id: messageId,
+                        });
+
+                        const profile = await this.api.getUserProfile();
+                        // Update message with new profile data
+                        const kycStatus = profile.status?.toUpperCase() || 'NOT SUBMITTED';
+
+                        const profileMessage = this.BOT_MESSAGES.PROFILE_TEMPLATE
+                            .replace('%id%', profile.id || 'N/A')
+                            .replace('%email%', profile.email || 'Not provided')
+                            .replace('%status%', this.formatStatus(profile.status))
+                            .replace('%firstName%', profile.firstName || 'Not provided')
+                            .replace('%lastName%', profile.lastName || 'Not provided')
+                            .replace('%profileImage%', profile.profileImage || 'Not provided')
+                            .replace('%organizationId%', profile.organizationId || 'Not assigned')
+                            .replace('%role%', profile.role || 'Not assigned')
+                            .replace('%type%', profile.type || 'Not provided')
+                            .replace('%relayerAddress%', profile.relayerAddress || 'Not assigned')
+                            .replace('%flags%', profile.flags?.join(', ') || 'None')
+                            .replace('%walletAddress%', profile.walletAddress || 'Not set')
+                            .replace('%walletId%', profile.walletId || 'Not set')
+                            .replace('%walletAccountType%', profile.walletAccountType || 'Not set');
+
+                        await this.bot.editMessageText(profileMessage, {
+                            chat_id: chatId,
+                            message_id: messageId,
+                            parse_mode: 'Markdown',
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{
+                                        text: '🔄 Refresh Profile',
+                                        callback_data: 'refresh_profile'
+                                    }]
+                                ]
+                            }
+                        });
+
+                    } catch (error: any) {
+                        console.error('Error in refresh profile:', error);
+                        await this.bot.editMessageText(`Opps: ${error.message
+                            || 'Failed to refresh profile. Please try again'}`, {
+                            chat_id: chatId,
+                            message_id: messageId,
+                        });
+                    }
+                }
+                if (callbackQuery.data === 'refresh_balance') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    await this.bot.editMessageText('🔄 Refreshing balances...', {
+                        chat_id: chatId,
+                        message_id: messageId,
+                    });
+                    await this.handleBalance(callbackQuery.message);
+                    return;
+                }
+
+                // Handle view_balances callback
+                if (callbackQuery.data === 'view_balances') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    await this.handleBalance(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'refresh_wallets'
+                    || callbackQuery.data === 'change_default_wallet') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    await this.handleWallets(callbackQuery.message);
+                }
+
+                if (callbackQuery.data === 'show_deposit') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    const defaultWallet = await this.api.getDefaultWallet();
+                    if (!defaultWallet) {
+                        await this.bot.sendMessage(
+                            chatId,
+                            "You don't have a default wallet set up yet.");
+                    } else {
+                        const wallets = await this.api.getWallets();
+                        const defaultWallet = wallets.find((w: CopperxWallet) => w.isDefault);
+                        await this.bot.sendMessage(
+                            chatId,
+                            `📥 *Deposit Address*\n\nNetwork: ${wallets[0].network}\n` +
+                            `Address: \`${wallets[0].walletAddress}\`\n\n` +
+                            '⚠️ Make sure to send funds on the correct network!', {
+                            parse_mode: 'Markdown'
+                        });
+                    }
+                }
+
+                // Handle set_default callback
+                if (callbackQuery.data?.startsWith('set_default:')) {
+                    const walletId = callbackQuery.data.replace('set_default:', '');
+
+                    try {
+                        // Show loading state in the button
+                        await this.bot.editMessageReplyMarkup({
+                            inline_keyboard: [[{
+                                text: '⏳ Setting as default...',
+                                callback_data: 'in_progress'
+                            }]]
+                        }, {
+                            chat_id: chatId,
+                            message_id: messageId
+                        });
+
+                        // Call API to set default wallet
+                        await this.api.setDefaultWallet(walletId);
+
+                        // Update button to show success
+                        await this.bot.editMessageReplyMarkup({
+                            inline_keyboard: [[{
+                                text: '✅ Default wallet set!',
+                                callback_data: 'already_default'
+                            }]]
+                        }, {
+                            chat_id: chatId,
+                            message_id: messageId
+                        });
+
+                        // Show success message
+                        await this.bot.sendMessage(chatId,
+                            '✅ Default wallet updated successfully!');
+
+                        // Refresh all wallets to show updated default status
+                        await this.handleWallets(callbackQuery.message);
+                    } catch (error: any) {
+                        console.error('Error setting default wallet:', error);
+
+                        // Update button to show error
+                        await this.bot.editMessageReplyMarkup({
+                            inline_keyboard: [[{
+                                text: '❌ Error setting default',
+                                callback_data: 'error'
+                            }]]
+                        }, {
+                            chat_id: chatId,
+                            message_id: messageId
+                        });
+
+                        await this.bot.sendMessage(chatId,
+                            `❌ Error: ${error.message || 'Failed to set default wallet'}`);
+                    }
+                    return;
+                }
+
+                // Handle already_default callback (prevent duplicate actions)
+                if (callbackQuery.data === 'already_default') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id, {
+                        text: 'This is already your default wallet',
+                        show_alert: true
+                    });
+                    return;
+                }
+                if (callbackQuery.data === 'check_kyc_status') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    await this.handleKyc(callbackQuery.message);
+                }
+            } catch (error) {
+                // Send a separate notification about the error
                 try {
-                    await this.bot.editMessageText(`🔄 Refresh Profile...`, {
-                        chat_id: chatId,
-                        message_id: messageId,
-                    });
-
-                    const profile = await this.api.getUserProfile();
-                    // Update message with new profile data
-                    const kycStatus = profile.status?.toUpperCase() || 'NOT SUBMITTED';
-
-                    const profileMessage = this.BOT_MESSAGES.PROFILE_TEMPLATE
-                        .replace('%id%', profile.id || 'N/A')
-                        .replace('%email%', profile.email || 'Not provided')
-                        .replace('%status%', this.formatStatus(profile.status))
-                        .replace('%firstName%', profile.firstName || 'Not provided')
-                        .replace('%lastName%', profile.lastName || 'Not provided')
-                        .replace('%profileImage%', profile.profileImage || 'Not provided')
-                        .replace('%organizationId%', profile.organizationId || 'Not assigned')
-                        .replace('%role%', profile.role || 'Not assigned')
-                        .replace('%type%', profile.type || 'Not provided')
-                        .replace('%relayerAddress%', profile.relayerAddress || 'Not assigned')
-                        .replace('%flags%', profile.flags?.join(', ') || 'None')
-                        .replace('%walletAddress%', profile.walletAddress || 'Not set')
-                        .replace('%walletId%', profile.walletId || 'Not set')
-                        .replace('%walletAccountType%', profile.walletAccountType || 'Not set');
-                    
-                    await this.bot.editMessageText(profileMessage, {
-                        chat_id: chatId,
-                        message_id: messageId,
-                        parse_mode: 'Markdown',
-                        reply_markup: {
-                            inline_keyboard: [
-                            [{
-                                text: '🔄 Refresh Profile',
-                                callback_data: 'refresh_profile'
-                                }]
-                            ]
-                        }
-                    });
-
-                } catch (error: any) {
-                    console.error('Error in refresh profile:', error);
-                    await this.bot.editMessageText(`Opps: ${error.message
-                        || 'Failed to refresh profile. Please try again'}`, {
-                        chat_id: chatId,
-                        message_id: messageId,
-                    });
-                }
-            }
-            if (callbackQuery.data === 'refresh_balance') {
-                await this.bot.answerCallbackQuery(callbackQuery.id);
-                await this.handleBalance(callbackQuery.message);
-            }
-
-            if (callbackQuery.data === 'show_deposit') {
-                await this.bot.answerCallbackQuery(callbackQuery.id);
-                const defaultWallet = await this.api.getDefaultWallet();
-                if (!defaultWallet) {
                     await this.bot.sendMessage(
                         chatId,
-                        "You don't have a default wallet set up yet.");
-                } else {
-                    const wallets = await this.api.getWallets();
-                    const defaultWallet = wallets.find((w: CopperxWallet) => w.isDefault);
-                    await this.bot.sendMessage(
-                        chatId,
-                        `📥 *Deposit Address*\n\nNetwork: ${wallets[0].network}\n` +
-                        `Address: \`${wallets[0].walletAddress}\`\n\n` +
-                        '⚠️ Make sure to send funds on the correct network!', {
-                        parse_mode: 'Markdown'
-                    });
+                        '❌ An error occurred while processing your request.'
+                    );
+                } catch (msgError) {
+                    console.error('Failed to send error message:', msgError);
                 }
             }
-
-            if (callbackQuery.data?.startsWith('set_default:')) {
-                const walletId = callbackQuery.data.replace('set_default:', '');
-                await this.api.setDefaultWallet(walletId);
-                await this.bot.answerCallbackQuery(callbackQuery.id, {
-                    text: '✅ Default wallet updated!'
-                });
-                await this.handleWallets(callbackQuery.message);
-            }
-
-            if (callbackQuery.data === 'check_kyc_status') {
-                await this.bot.answerCallbackQuery(callbackQuery.id);
-                await this.handleKyc(callbackQuery.message);
-            }
+           
         });
     }
 

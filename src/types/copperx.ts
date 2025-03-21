@@ -66,17 +66,6 @@ export interface CopperxWalletDefault {
     walletId: string
 }
 
-export interface CopperxTransaction {
-    id: string;
-    type: 'deposit' | 'withdrawal' | 'transfer';
-    amount: string;
-    currency: string;
-    status: 'pending' | 'completed' | 'failed';
-    timestamp: string;
-    fromAddress?: string;
-    toAddress?: string;
-    network: string;
-}
 
 export interface CopperxApiError {
     message: Record<string, any> | string;

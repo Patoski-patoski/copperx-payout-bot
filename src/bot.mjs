@@ -64,5 +64,25 @@ const KYC_RESPONSE = {
    ]
  }
  
- console.log(KYC_RESPONSE.data[0]);
+console.log(KYC_RESPONSE.data[0]);
+ 
+
+const arr = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+
+if (arr.length == 0) console.log("Empty transactions");
+
+if (arr.length < 10) console.log(arr);
+
+const last10transactions = arr.slice(0, 10);
+console.log("last 10 transactions", last10transactions);
+
+if (arr.length > 10) {
+  console.log("liced", arr.slice(0, 10));
+}
+
+
+
+
+console.log(arr.length);
+
  

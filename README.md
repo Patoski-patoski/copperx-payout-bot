@@ -3,7 +3,7 @@
 A Telegram bot for Copperx Payout that allows users to
 
 - manage their crypto wallets
-- send funds, and
+- send funds, **and**
 - receive notifications.
 
 ## **Features**

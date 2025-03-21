@@ -1,18 +1,15 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { config } from '../config/config';
 import {
   CopperxAuthResponse,
   CopperxUser,
   CopperxWallet,
-  CopperxTransaction,
   CopperxApiError,
   CopperxWalletBalance,
-  CopperxWalletDefault, 
 } from '../types/copperx';
 
 import {
   EmailOtpResponse,
-  ApiError
 } from '../types/index';
 
 export class CopperxApiService {
@@ -33,13 +30,13 @@ export class CopperxApiService {
     });
 
     // Response interceptor for error handling
-     this.api.interceptors.response.use(
+    this.api.interceptors.response.use(
       response => response,
       error => {
         if (error.response?.status >= 400 && error.response?.status < 500) {
           const apiError: CopperxApiError = error.response.data;
           // Format the error message based on whether message is an object or string
-          const errorMessage = typeof apiError.message === 'object' 
+          const errorMessage = typeof apiError.message === 'object'
             ? JSON.stringify(apiError.message)
             : apiError.message;
 
@@ -109,7 +106,9 @@ export class CopperxApiService {
           '/api/auth/email-otp/request',
           { email: email.trim() }
         );
+        console.log("Request OTP", response);
         return response.data;
+        
       } catch (error: any) {
         console.error('Email OTP request failed:', error);
         throw this.formatError(error);
@@ -165,16 +164,16 @@ export class CopperxApiService {
         const response = await this.api.get('/api/auth/me');
         return response.data;
       } catch (error: any) {
-      console.error("Failed to get user profile:", {
-        statusCode: error.statusCode,
-        error: error.error,
-        message: error.message,
-      });
+        console.error("Failed to get user profile:", {
+          statusCode: error.statusCode,
+          error: error.error,
+          message: error.message,
+        });
 
-      throw new Error(
-        error.message ||
-        'Failed to get user profile. Please try again later.'
-      );
+        throw new Error(
+          error.message ||
+          'Failed to get user profile. Please try again later.'
+        );
       }
     });
   }
@@ -246,24 +245,48 @@ export class CopperxApiService {
   }
 
   // Set default wallet
-  async setDefaultWallet(walletId: string): Promise<CopperxWalletDefault> {
-    const response = await this.api.post(
-      `/api/wallets/default`,
-      { walletId });
-    return response.data;
+  async setDefaultWallet(walletId: string): Promise<CopperxWallet> {
+    try { 
+      const response = await this.api.post(
+        `/api/wallets/default`,
+        { walletId });
+      return response.data;
+    } catch (error: any) {
+      console.error("Failed to set default wallet:", {
+        statusCode: error.statusCode,
+        error: error.error,
+        message: error.message,
+      });
+      throw new Error(
+        error.message ||
+        'Failed to set default wallet. Please try again later.'
+      );
+    }
   }
 
-  // Get default wallet
-  async getDefaultWallet(): Promise<CopperxWalletDefault> {
-    const response = await this.api.get(
-      `/api/wallets/default`);
-    return response.data;
+  // Get default walletAddress
+  async getDefaultWallet(): Promise<CopperxWallet > {
+    try {
+      const response = await this.getWallets();
+      const defaultWallet = response.find((wallet: CopperxWallet) => wallet.isDefault);
+      if (!defaultWallet) throw new Error('No default wallet found');
+      return defaultWallet;
+    } catch (error: any) {
+      console.error("Failed to get default wallet:", {
+        statusCode: error.statusCode,
+        error: error.error,
+        message: error.message,
+      });
+      throw new Error(
+        error.message ||
+        'Failed to get default wallet. Please try again later.'
+      );
+    }
   }
 
   // Transactions
   // Get all transactions
-  async getTransactionsHistory(page: number = 1, limit: number = 10):
-    Promise<CopperxTransaction[]> {
+  async getTransactionsHistory(page: number = 1, limit: number = 10) {
     try {
       const response = await this.api.get(`/api/transfers`, {
         params: { page, limit }
