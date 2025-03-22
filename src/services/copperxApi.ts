@@ -1,3 +1,5 @@
+// src/services/copperxApi
+
 import axios, { AxiosInstance } from 'axios';
 import { config } from '../config/config';
 import {
@@ -6,6 +8,8 @@ import {
   CopperxWallet,
   CopperxApiError,
   CopperxWalletBalance,
+  EmailTransferRequest,
+  WalletWithdrawalRequest,
 } from '../types/copperx';
 
 import {
@@ -98,24 +102,6 @@ export class CopperxApiService {
     this.api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
-  // Authentication methods
-  async requestEmailOtp(email: string): Promise<EmailOtpResponse> {
-    return this.retry('Request Email OTP', async () => {
-      try {
-        const response = await this.api.post<EmailOtpResponse>(
-          '/api/auth/email-otp/request',
-          { email: email.trim() }
-        );
-        console.log("Request OTP", response);
-        return response.data;
-        
-      } catch (error: any) {
-        console.error('Email OTP request failed:', error);
-        throw this.formatError(error);
-      }
-    });
-  }
-
   private formatError(error: any): Error {
     if (error.code === 'ETIMEDOUT') {
       return new Error('Connection timed out. Please try again.');
@@ -135,6 +121,24 @@ export class CopperxApiService {
       'An unexpected error occurred'
     );
   }
+
+  // Authentication methods
+  async requestEmailOtp(email: string): Promise<EmailOtpResponse> {
+    return this.retry('Request Email OTP', async () => {
+      try {
+        const response = await this.api.post<EmailOtpResponse>(
+          '/api/auth/email-otp/request',
+          { email: email.trim() }
+        );
+        return response.data;
+
+      } catch (error: any) {
+        console.error('Email OTP request failed:', error);
+        throw this.formatError(error);
+      }
+    });
+  }
+
 
   async verifyEmailOtp(email: string, otp: string, sid: string): Promise<CopperxAuthResponse> {
     return this.retry('Verify Email OTP', async () => {
@@ -306,31 +310,88 @@ export class CopperxApiService {
     }
   }
 
-  // Send funds
-  async sendFunds(params: {
-    recipient: string;
-    amount: string;
-    currency: string;
-    type: 'email' | 'wallet';
-  }): Promise<{ success: boolean; transactionId: string }> {
-    try {
-      const endpoint = params.type === 'email'
-        ? '/api/transfers/send'
-      : '/api/transfers/wallet-withdraw';
+  // async getTransferFee(params: TransferRequest): Promise<TransferFeeResponse> {
+  //   try {
+  //     const response = await this.api.post(
+  //       '/api/transfers/calculate-fee',
+  //       params);
+      
+  //     return response.data;
+  //   } catch (error: any) {
+  //     console.error("Failed to get transfer fee:", {
+  //       statusCode: error.statusCode,
+  //       error: error.error,
+  //       message: error.message,
+  //     });
+  //     throw new Error(
+  //       error.message ||
+  //       'Failed to get transfer fee. Please try again later.'
+  //     );
+  //   }
+  // }
 
-      const response = await this.api.post(endpoint, params);
+  async sendEmailTransfer(request: EmailTransferRequest): Promise<any> {
+    try {
+      const response = await this.api.post('/api/transfers/send', request);
+      console.log("Email transfer response:", response.data);
       return response.data;
+      
     } catch (error: any) {
-      console.error("Failed to send funds:", {
+      console.error("Failed to send email transfer:", {
         statusCode: error.statusCode,
         error: error.error,
         message: error.message,
       });
-
       throw new Error(
         error.message ||
-        'Failed to send funds. Please try again later.'
+        'Failed to send email transfer. Please try again later.'
       );
     }
   }
+
+  async sendWalletWithdrawal(request: WalletWithdrawalRequest): Promise<any> {
+    try {
+      const response = await this.api.post('/api/transfers/wallet-withdraw', request);
+      console.log("Wallet withdrawal response:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Failed to send wallet withdrawal:", {
+        statusCode: error.statusCode,
+        error: error.error,
+        message: error.message,
+      });
+      throw new Error(
+        error.message ||
+        'Failed to send wallet withdrawal. Please try again later.'
+      );
+    }
+  }
+
+//   // Send funds
+//   async sendFunds(params: {
+//     recipient: string;
+//     amount: string;
+//     currency: string;
+//     type: 'email' | 'walletAddress';
+//   }): Promise<{ success: boolean; transactionId: string }> {
+//     try {
+//       const endpoint = params.type === 'email'
+//         ? '/api/transfers/send'
+//       : '/api/transfers/wallet-withdraw';
+
+//       const response = await this.api.post(endpoint, params);
+//       return response.data;
+//     } catch (error: any) {
+//       console.error("Failed to send funds:", {
+//         statusCode: error.statusCode,
+//         error: error.error,
+//         message: error.message,
+//       });
+
+//       throw new Error(
+//         error.message ||
+//         `Failed to send via ${params.type}. Please try again later.`
+//       );
+//     }
+//   }
 } 

@@ -8,6 +8,13 @@ interface UserSession {
     token?: string;
     organizationId?: string;
     userId?: string;
+    transferData?: {
+        email?: string;
+        amount?: string;
+        purposeCode?: string;
+        currency?: string;
+        note?: string;
+    }
 }
 
 export class SessionManager {
@@ -99,9 +106,85 @@ export class SessionManager {
         return this.sessions.get(chatId)?.userId || null;
     }
 
+    // Add these methods to your SessionManager class
+    clearTransferState(chatId: number): void {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            session.transferData = {};
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    // Add these methods to your SessionManager class
+    clearTransferData(chatId: number): void {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            session.transferData = {};
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    setTransferEmail(chatId: number, email: string): void {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            if (!session.transferData) {
+                session.transferData = {};
+            }
+            session.transferData.email = email;
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    setTransferAmount(chatId: number, amount: string): void {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            if (!session.transferData) {
+                session.transferData = {};
+            }
+            session.transferData.amount = amount;
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    setTransferCurrency(chatId: number, currency: string): void {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            if (!session.transferData) {
+                session.transferData = {};
+            }
+            session.transferData.currency = currency;
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    setTransferPurpose(chatId: number, purpose: string): void {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            if (!session.transferData) {
+            session.transferData = {};
+            }
+            session.transferData.purposeCode = purpose;
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    setTransferNote(chatId: number, note: string): void {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            if (!session.transferData) {
+                session.transferData = {};
+            }
+            session.transferData.note = note;
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    getTransferData(chatId: number): any {
+        const session = this.sessions.get(chatId);
+        return session?.transferData || {};
+    }
    
     // clear the session
-
     clearSession(chatId: number) {
         this.sessions.delete(chatId);
     }

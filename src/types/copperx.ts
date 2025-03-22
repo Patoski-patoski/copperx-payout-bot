@@ -97,6 +97,67 @@ export interface CopperxApiError {
 // }
 
 
+export interface EmailTransferRequest {
+    walletAddress?: string;
+    email?: string;
+    payeeId?: string;
+    amount: string;
+    purposeCode: string;
+    currency: string;
+    note?: string;
+}
+
+export interface WalletWithdrawalRequest {
+    walletAddress: string;
+    amount: string;
+    purposeCode: string;
+    currency: string;
+}
+
+export interface BankWithdrawalRequest {
+    amount: string;
+    asset: string;
+    bankAccountId: string;
+    memo?: string;
+}
+
+export interface BulkTransferRequest {
+    asset: string;
+    transfers: {
+        recipientEmail: string;
+        amount: string;
+        memo?: string;
+    }[];
+}
+
+export interface TransferResponse {
+    id: string;
+    status: string;
+    amount: string;
+    asset: string;
+    fee: string;
+    network?: string;
+    recipientEmail?: string;
+    recipientAddress?: string;
+    txHash?: string;
+    createdAt: string;
+}
+
+export interface TransferFeeResponse {
+    amount: string;
+    fee: string;
+    total: string;
+    asset: string;
+}
+
+export interface BankAccount {
+    id: string;
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    isDefault: boolean;
+}
+
 
 export interface PusherDepositEvent {
     amount: string;
