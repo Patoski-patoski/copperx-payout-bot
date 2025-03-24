@@ -1,0 +1,117 @@
+// src/handlers/authHandler.ts
+
+import TelegramBot from 'node-telegram-bot-api';
+import { BaseHandler } from './baseHandler';
+import { CopperxAuthResponse } from '@/types/copperx';
+
+export class AuthHandler extends BaseHandler {
+    async handleLogin(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+
+        // Check if user is already logged in
+        if (this.sessions.isAuthenticated(chatId)) {
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.ALREADY_LOGGED_IN
+            );
+            return;
+        }
+
+        await this.bot.sendMessage(chatId, this.BOT_MESSAGES.ENTER_EMAIL);
+        // Set user state to waiting for email
+        this.sessions.setState(chatId, 'WAITING_EMAIL');
+    }
+
+    async handleLogout(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+
+        if (!this.sessions.isAuthenticated(chatId)) {
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.NOT_LOGGED_IN
+            );
+            return;
+        }
+        this.sessions.clearSession(chatId);
+        await this.bot.sendMessage(
+            chatId,
+            this.BOT_MESSAGES.LOGOUT_SUCCESS
+        );
+    }
+
+    // Handle email input
+    async handleEmailInput(chatId: number, email: string) {
+        if (!email.match(this.EMAIL_REGEX)) {
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.INVALID_EMAIL
+            );
+            return;
+        }
+        try {
+            const response = await this.api.requestEmailOtp(email);
+
+            this.sessions.setEmail(chatId, email);
+            this.sessions.setState(chatId, 'WAITING_OTP');
+            this.sessions.setSid(chatId, response.sid);
+
+            await this.bot.sendMessage(chatId, this.BOT_MESSAGES.ENTER_OTP);
+
+        } catch (error: any) {
+            console.error('Error in handleEmailInput:', error);
+            await this.bot.sendMessage(
+                chatId,
+                `OOps: ${error.message
+                || 'Failed to send OTP. Please try again later.'}`
+            );
+            this.sessions.setState(chatId, 'WAITING_EMAIL');
+        }
+    }
+
+    // Handle OTP input
+
+    async handleOtpInput(chatId: number, otp: string) {
+        if (otp.length !== 6) {
+            await this.bot.sendMessage(chatId, this.BOT_MESSAGES.INVALID_OTP);
+            return;
+        }
+        try {
+            const [email, sid] = this.getSessionData(chatId);
+            const authResponse = await this.api.verifyEmailOtp(email, otp, sid);
+
+            this.updateSessionAfterLogin(chatId, authResponse);
+            await this.bot.sendMessage(chatId,
+                this.BOT_MESSAGES.LOGIN_SUCCESS
+            );
+
+        } catch (error: any) {
+            console.error('OTP verification error:', error);
+            await this.bot.sendMessage(
+                chatId,
+                `Opps: ${error.message || 'Failed to verify OTP. Please try again.'}`
+            );
+        }
+    }
+
+    // Get session data
+    getSessionData(chatId: number): [string, string] {
+        const email = this.sessions.getEmail(chatId);
+        const sid = this.sessions.getSid(chatId);
+
+        if (!email || !sid) {
+            throw new Error(this.BOT_MESSAGES.SESSION_EXPIRED);
+        }
+        return [email, sid];
+    }
+
+    // Update session after login
+    updateSessionAfterLogin(chatId: number,
+        authResponse: CopperxAuthResponse) {
+
+        this.sessions.setToken(chatId, authResponse.accessToken);
+        this.sessions.setState(chatId, 'AUTHENTICATED');
+        this.sessions.setOrganizationId(chatId, authResponse.user.organizationId);
+        this.sessions.setUserId(chatId, authResponse.user.id);
+    }
+
+} 
