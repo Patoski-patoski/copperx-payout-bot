@@ -40,7 +40,7 @@ walletAccountType: \`%walletAccountType%\``,
         LOGIN_SUCCESS: `✅ Login successful!
 
 You can now: 
-- Use /balances to check your wallet balances.
+- Use /balance to check your wallet balances.
 - Use /wallets to view your wallets.
 - Use /default to view your default wallet.
 - Use /kyc to check your KYC status.
@@ -96,12 +96,11 @@ Please follow these steps:
 
         TRANSFER_CONFIRM_TEMPLATE: `📋 *Transfer Confirmation*
 
-*Amount:* %amount% %currency%
-*Fee:* %fee% %currency%
-*Total:* %total% %currency%
+*Amount:* %amount%
+*Currency:* %currency%
 
-*To:* %recipient%
-*Purpose:* %purpose%
+*To:* %email%
+*Purpose:* %purposeCode%
 %note%
 
 Please confirm this transfer.`,
@@ -112,8 +111,8 @@ Please confirm this transfer.`,
 *Status:* %status%
 *Amount:* %amount% %currency%
 *Recipient:* %recipient%
-
+*Recipient Email:* %recipient_email%
 The recipient will be notified via email.`,
 
-        TRANSFER_ERROR: '❌ Transfer failed: %message%',
+        TRANSFER_ERROR: 'Transfer failed: %message%',
     };

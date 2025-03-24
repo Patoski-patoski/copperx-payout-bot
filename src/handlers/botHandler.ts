@@ -114,21 +114,131 @@ export class BotHandler {
             if (!callbackQuery.message) return;
 
             const chatId = callbackQuery.message.chat.id;
+            const messageId = callbackQuery.message.message_id;
             const data = callbackQuery.data || '';
 
             try {
                 await this.bot.answerCallbackQuery(callbackQuery.id);
 
-                // Route callbacks to appropriate handlers
-                if (data.startsWith('transfer_')) {
-                    // Handle transfer-related callbacks
-                    // You can implement a routing mechanism here
-                } else if (data.startsWith('set_default:')) {
-                    // Handle wallet-related callbacks
-                } else if (data === 'refresh_profile') {
-                    // Handle profile-related callbacks
+                // Handle transfer purpose selection
+                if (callbackQuery.data?.startsWith('transfer_purpose:')) {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    const purpose = callbackQuery.data.replace('transfer_purpose:', '');
+                    this.sessions.setTransferPurpose(chatId, purpose);
+                    // Ask for optional note
+                    await this.bot.sendMessage(
+                        chatId,
+                        BOT_MESSAGES.TRANSFER_ENTER_NOTE
+                    );
+
+                    // Update session state
+                    this.sessions.setState(chatId, 'WAITING_TRANSFER_NOTE');
+                    return;
                 }
-                // ... add more routing logic
+
+                // Handle transfer confirmation
+                if (callbackQuery.data === 'transfer_confirm') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    await this.transferHandler.processTransfer(chatId);
+                    return;
+                }
+
+                // Handle transfer cancellation
+                if (callbackQuery.data === 'transfer_cancel') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    await this.bot.sendMessage(chatId, 'Transfer cancelled.');
+                    this.sessions.clearTransferData(chatId);
+                    this.sessions.setState(chatId, 'AUTHENTICATED');
+                    return;
+                }
+
+                // Handle set_default callback
+                if (callbackQuery.data?.startsWith('set_default:')) {
+                    const walletId = callbackQuery.data.replace('set_default:', '');
+
+                    try {
+                        // Show loading state in the button
+                        await this.bot.editMessageReplyMarkup({
+                            inline_keyboard: [[{
+                                text: '⏳ Setting as default...',
+                                callback_data: 'in_progress'
+                            }]]
+                        }, {
+                            chat_id: chatId,
+                            message_id: messageId
+                        });
+
+                        // Call API to set default wallet
+                        await this.api.setDefaultWallet(walletId);
+
+                        // Update button to show success
+                        await this.bot.editMessageReplyMarkup({
+                            inline_keyboard: [[{
+                                text: '✅ Default wallet set!',
+                                callback_data: 'already_default'
+                            }]]
+                        }, {
+                            chat_id: chatId,
+                            message_id: messageId
+                        });
+
+                        // Show success message
+                        await this.bot.sendMessage(chatId,
+                            '✅ Default wallet updated successfully!');
+                        // Refresh all wallets to show updated default status
+                        await this.walletHandler.handleWallets(callbackQuery.message);
+                    } catch (error: any) {
+                        console.error('Error setting default wallet:', error);
+
+                        // Update button to show error
+                        await this.bot.editMessageReplyMarkup({
+                            inline_keyboard: [[{
+                                text: '❌ Error setting default',
+                                callback_data: 'error'
+                            }]]
+                        }, {
+                            chat_id: chatId,
+                            message_id: messageId
+                        });
+
+                        await this.bot.sendMessage(chatId,
+                            `❌ Error: ${error.message || 'Failed to set default wallet'}`);
+                    }
+                    return;
+                }
+
+                // Handle already_default callback (prevent duplicate actions)
+                if (callbackQuery.data === 'already_default') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id, {
+                        text: 'This is already your default wallet',
+                        show_alert: true
+                    });
+                    return;
+                }
+                if (callbackQuery.data === 'refresh_wallets') {
+                    const loadingMsg = await this.bot.sendMessage(
+                        chatId,
+                        '🔄 Refreshing wallet list...'
+                    );
+
+                    await this.bot.deleteMessage(chatId, loadingMsg.message_id);
+
+                    await this.walletHandler.handleWallets(callbackQuery.message);
+                }
+
+                
+
+                // Handle other callback queries...
+                if (callbackQuery.data === 'check_kyc_status') {
+                    await this.bot.sendMessage(chatId, '🔄 Checking KYC status...');
+                    await this.profileHandler.handleKyc(callbackQuery.message);
+                }
+
+                if (callbackQuery.data && ['refresh_balance', 'view_balance'].includes(callbackQuery.data)) {
+                    await this.bot.sendMessage(chatId, '🔄 Refreshing balance...');
+                    await this.walletHandler.handleBalance(callbackQuery.message);
+                }
+
 
             } catch (error) {
                 console.error('Error handling callback:', error);

@@ -20,7 +20,6 @@ export class HistoryHandler extends BaseHandler {
                 ' 🔄 Fetching your transaction history...'
             );
             const transactions = await this.api.getTransactionsHistory();
-            console.log('Transactions:', transactions);
 
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 

@@ -7,6 +7,7 @@ import { EmailTransferRequest } from '@/types/copperx';
 export class TransferHandler extends BaseHandler {
 
     async handleSend(msg: TelegramBot.Message) {
+
         const { chat: { id: chatId } } = msg;
         if (!this.sessions.isAuthenticated(chatId)) {
             await this.bot.sendMessage(chatId,
@@ -72,32 +73,65 @@ export class TransferHandler extends BaseHandler {
             return;
         }
 
-        // Store amount in session
-        this.sessions.setTransferAmount(chatId, amount);
-        this.sessions.setTransferCurrency(chatId, 'USD'); // Default currency
+        try {
+            // Convert amount to base unit
+            const baseAmount = this.convertToBaseUnit(parseFloat(amount));
 
-        // Ask for purpose
-        await this.bot.sendMessage(
-            chatId,
-            this.BOT_MESSAGES.TRANSFER_SELECT_PURPOSE,
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: '👤 Self', callback_data: 'transfer_purpose:self' },
-                            { text: '👨‍👩‍👧‍👦 Family', callback_data: 'transfer_purpose:family' }
-                        ],
-                        [
-                            { text: '🎁 Gift', callback_data: 'transfer_purpose:gift' },
-                            { text: '💼 Business', callback_data: 'transfer_purpose:business' }
-                        ],
-                        [
-                            { text: '💸 Payment', callback_data: 'transfer_purpose:payment' }
+            // Store amount in session
+            this.sessions.setTransferAmount(chatId, baseAmount);
+            this.sessions.setTransferCurrency(chatId, 'USDC'); // Default currency
+
+            // Show confirmation of amount
+            const formattedAmount = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(parseFloat(amount));
+
+            await this.bot.sendMessage(
+                chatId,
+                `\n💰 Amount to send: ${formattedAmount}\n`
+            );
+
+            // Asking for purpose with inline keyboard
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.TRANSFER_SELECT_PURPOSE,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '👤 Self', callback_data: 'transfer_purpose:self' },
+                                { text: '� Salary', callback_data: 'transfer_purpose:salary' }
+                            ],
+                            [
+                                { text: '🎁 Gift', callback_data: 'transfer_purpose:gift' },
+                                { text: '💰 Income', callback_data: 'transfer_purpose:income' }
+                            ],
+                            [
+                                { text: '💰 Saving', callback_data: 'transfer_purpose:saving' },
+                                { text: '🎓 Education Support', callback_data: 'transfer_purpose:education_support' }
+
+                            ],
+                            [
+                                {text: '👨‍👩‍👧‍👦 Family', callback_data: 'transfer_purpose:family'},
+                                { text: '🏠 Home Improvement', callback_data: 'transfer_purpose:home_improvement' },
+                            ],
+                            [
+                                { text: '💸 Reimbursement', callback_data: 'transfer_purpose:reimbursement' }
+                            ]
                         ]
-                    ]
+                    }
                 }
-            }
-        );
+            );
+
+        } catch (error) {
+            console.error('Error converting amount:', error);
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.TRANSFER_ERROR
+            );
+        }
+       
     }
 
     // Handle note input for transfer
@@ -122,10 +156,10 @@ export class TransferHandler extends BaseHandler {
             // Format note if exists
             const noteDisplay = transferData.note ?
                 `*Note:* ${transferData.note}` : '';
-
+            
             // Create confirmation message
             const confirmMessage = this.BOT_MESSAGES.TRANSFER_CONFIRM_TEMPLATE
-                .replace('%amount%', transferData.amount)
+                .replace('%amount%', this.convertFromBaseUnit(Number(transferData.amount)).toString())
                 .replace('%currency%', transferData.currency)
                 .replace('%purpose%', purposeDisplay)
                 .replace('%note%', noteDisplay);
@@ -166,7 +200,11 @@ export class TransferHandler extends BaseHandler {
             );
 
             // Get transfer data from session
+            console.log("Getting transfer data...");
+            await new Promise(resolve => setTimeout(resolve, 3000));
             const transferData = this.sessions.getTransferData(chatId);
+            console.log('Transfer data: ', transferData);
+
 
             // Prepare request payload
             const transferRequest: EmailTransferRequest = {
@@ -183,17 +221,29 @@ export class TransferHandler extends BaseHandler {
 
             // Send transfer request to API
             const response = await this.api.sendEmailTransfer(transferRequest);
+            console.log('Transfer response: ', response);
 
             // Delete loading message
             await this.bot.deleteMessage(chatId, loadingMsg.message_id);
-
+            if(response && response.error){
+                await this.bot.sendMessage(
+                    chatId,
+                    this.BOT_MESSAGES.TRANSFER_ERROR.replace(
+                        '%message%', response.error
+                    )
+                );
+                return;
+            }
             // Show success message
             const successMessage = this.BOT_MESSAGES.TRANSFER_SUCCESS
                 .replace('%id%', response.id)
                 .replace('%status%', response.status)
                 .replace('%amount%', response.amount)
                 .replace('%currency%', response.currency)
-                .replace('%recipient%', transferData.email);
+                .replace('%recipient%', response.customer.name)
+                .replace('%recipient_email%', response.customer.email);
+
+            console.log('Success message: ', successMessage);
 
             await this.bot.sendMessage(
                 chatId,
@@ -211,20 +261,34 @@ export class TransferHandler extends BaseHandler {
                 chatId,
                 this.BOT_MESSAGES.TRANSFER_ERROR.replace(
                     '%message%',
-                    error.message || 'An unexpected error occurred'
+                    'Please try again'
                 )
             );
         }
+    }
+
+    private convertToBaseUnit(amount: number, decimals: number = 8)
+        : string {
+        return (amount * Math.pow(10, decimals)).toString();
+    }
+
+    private convertFromBaseUnit(amount: number, decimals: number = 8)
+        : number {
+        return Number(amount) / Math.pow(10, decimals);
     }
 
     // Helper method to get display text for purpose code
     getPurposeDisplayText(purposeCode: string): string {
         const purposeMap = {
             'self': '👤 Self',
-            'family': '👨‍👩‍👧‍👦 Family',
+            'salary': '💰 Salary',
             'gift': '🎁 Gift',
-            'business': '💼 Business',
-            'payment': '💸 Payment'
+            'income': '💰 Income',
+            'saving': '💰 Saving',
+            'education_support': '🎓 Education Support',
+            'family': '👨‍👩‍👧‍👦 Family',
+            'home_improvement': '🏠 Home Improvement',
+            'reimbursement': '💸 Reimbursement',
         };
 
         return purposeMap[purposeCode as keyof typeof purposeMap] || purposeCode;

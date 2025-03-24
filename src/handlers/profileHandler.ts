@@ -19,7 +19,6 @@ export class ProfileHandler extends BaseHandler {
                 ' 🔄 Fetching your profile...'
             );
             const profile = await this.api.getUserProfile();
-            console.log('Profile response:', profile);
 
             // cREATE profile message
             const profileMessage = this.BOT_MESSAGES.PROFILE_TEMPLATE

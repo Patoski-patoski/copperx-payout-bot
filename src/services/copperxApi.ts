@@ -310,27 +310,8 @@ export class CopperxApiService {
     }
   }
 
-  // async getTransferFee(params: TransferRequest): Promise<TransferFeeResponse> {
-  //   try {
-  //     const response = await this.api.post(
-  //       '/api/transfers/calculate-fee',
-  //       params);
-      
-  //     return response.data;
-  //   } catch (error: any) {
-  //     console.error("Failed to get transfer fee:", {
-  //       statusCode: error.statusCode,
-  //       error: error.error,
-  //       message: error.message,
-  //     });
-  //     throw new Error(
-  //       error.message ||
-  //       'Failed to get transfer fee. Please try again later.'
-  //     );
-  //   }
-  // }
-
-  async sendEmailTransfer(request: EmailTransferRequest): Promise<any> {
+  
+  async sendEmailTransfer(request: EmailTransferRequest) {
     try {
       const response = await this.api.post('/api/transfers/send', request);
       console.log("Email transfer response:", response.data);
@@ -352,7 +333,7 @@ export class CopperxApiService {
   async sendWalletWithdrawal(request: WalletWithdrawalRequest): Promise<any> {
     try {
       const response = await this.api.post('/api/transfers/wallet-withdraw', request);
-      console.log("Wallet withdrawal response:", response.data);
+      // console.log("Wallet withdrawal response:", response.data);
       return response.data;
     } catch (error: any) {
       console.error("Failed to send wallet withdrawal:", {

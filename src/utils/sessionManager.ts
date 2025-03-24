@@ -9,11 +9,13 @@ interface UserSession {
     organizationId?: string;
     userId?: string;
     transferData?: {
+        type?: 'email' | 'walletAddress';
         email?: string;
         amount?: string;
         purposeCode?: string;
         currency?: string;
         note?: string;
+        walletAddress?: string;
     }
 }
 
@@ -106,7 +108,16 @@ export class SessionManager {
         return this.sessions.get(chatId)?.userId || null;
     }
 
-    // Add these methods to your SessionManager class
+    setTransferType(chatId: number, type: 'email' | 'walletAddress') {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            if (!session.transferData) {
+                session.transferData = {};
+            }
+            session.transferData.type = type;
+            this.sessions.set(chatId, session);
+        }
+    }
     clearTransferState(chatId: number): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -114,8 +125,21 @@ export class SessionManager {
             this.sessions.set(chatId, session);
         }
     }
+    getTransferType(chatId: number): 'email' | 'walletAddress' {
+        return this.sessions.get(chatId)?.transferData?.type as 'email' | 'walletAddress';
+    }
 
-    // Add these methods to your SessionManager class
+    setTransferWallet(chatId: number, walletAddress: string) {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            if (!session.transferData) {
+                session.transferData = {};
+            }
+            session.transferData.walletAddress = walletAddress;
+            this.sessions.set(chatId, session);
+        }
+    }
+
     clearTransferData(chatId: number): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -181,6 +205,7 @@ export class SessionManager {
 
     getTransferData(chatId: number): any {
         const session = this.sessions.get(chatId);
+        
         return session?.transferData || {};
     }
    

@@ -108,7 +108,7 @@ export class WalletHandler extends BaseHandler {
 
             // Add action buttons at the end
             await this.bot.sendMessage(chatId,
-                '', {
+                'Wallet loaded successfully!', {
                 reply_markup: {
                     inline_keyboard: [
                         [{
@@ -148,10 +148,9 @@ export class WalletHandler extends BaseHandler {
             const loadingMessage = await this.bot.sendMessage(chatId,
                 '🔄 Fetching balances...');
 
-            const balances = await this.api.getWalletBalances();
+            const balances = await this.api.getWalletBalances()
+
             if (!balances || balances.length === 0) {
-                console.log('No balances found for your wallets.');
-                console.log('balances', balances);
 
                 await this.bot.editMessageText('No balances found for your wallets.', {
                     chat_id: chatId,
@@ -168,10 +167,6 @@ export class WalletHandler extends BaseHandler {
                 '8453': 'Base',
                 '23434': 'Test Network'
             };
-
-
-            console.log('balances', balances);
-            console.log('balances[0]', balances[0]);
 
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 
