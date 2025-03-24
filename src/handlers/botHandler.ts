@@ -9,6 +9,7 @@ import { TransferHandler } from './transferHandler';
 import { ProfileHandler } from './profileHandler';
 import { HistoryHandler } from './historyHandler';
 import { BOT_MESSAGES } from '../utils/messageTemplates';
+import { TransferType } from '@/types/copperx';
 
 export class BotHandler {
     private readonly bot: TelegramBot;
@@ -91,6 +92,9 @@ export class BotHandler {
                     break;
                 case 'WAITING_TRANSFER_EMAIL':
                     await this.transferHandler.handleTransferEmail(chatId, text);
+                    break;
+                case 'WAITING_TRANSFER_WALLET':
+                    await this.transferHandler.handleTransferWallet(chatId, text);
                     break;
                 case 'WAITING_TRANSFER_AMOUNT':
                     await this.transferHandler.handleTransferAmount(chatId, text);
@@ -222,10 +226,14 @@ export class BotHandler {
                     );
 
                     await this.bot.deleteMessage(chatId, loadingMsg.message_id);
-
                     await this.walletHandler.handleWallets(callbackQuery.message);
                 }
 
+                
+                if (data.startsWith('transfer_type_')) {
+                    const type = data.replace('transfer_type_', '') as TransferType;
+                    await this.transferHandler.handleTransferTypeSelection(chatId, type);
+                }
                 
 
                 // Handle other callback queries...

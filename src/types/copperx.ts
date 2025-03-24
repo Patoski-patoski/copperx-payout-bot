@@ -82,21 +82,18 @@ export interface BaseTransferRequest {
     note?: string;
 }
 
-export interface EmailTransferRequest {
+// api/transfers/send
+export interface EmailTransferRequest extends BaseTransferRequest {
     walletAddress?: string;
     email?: string;
     payeeId?: string;
-    amount: string;
-    purposeCode: string;
-    currency: string;
-    note?: string;
 }
 
-export interface WalletWithdrawalRequest {
+export type TransferType = 'email' | 'wallet';
+
+// api/transfers/wallet-withdraw
+export interface WalletWithdrawalRequest extends BaseTransferRequest {
     walletAddress: string;
-    amount: string;
-    purposeCode: string;
-    currency: string;
 }
 
 export interface BankWithdrawalRequest {

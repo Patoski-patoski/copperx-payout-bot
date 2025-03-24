@@ -1,5 +1,7 @@
 // src/utils/sessionManager.ts
 
+import { TransferType } from "@/types/copperx";
+
 interface UserSession {
     chatId: number;
     state: string;
@@ -9,7 +11,7 @@ interface UserSession {
     organizationId?: string;
     userId?: string;
     transferData?: {
-        type?: 'email' | 'walletAddress';
+        type?: TransferType;
         email?: string;
         amount?: string;
         purposeCode?: string;
@@ -108,7 +110,7 @@ export class SessionManager {
         return this.sessions.get(chatId)?.userId || null;
     }
 
-    setTransferType(chatId: number, type: 'email' | 'walletAddress') {
+    setTransferType(chatId: number, type: TransferType) {
         const session = this.sessions.get(chatId);
         if (session) {
             if (!session.transferData) {
@@ -125,8 +127,8 @@ export class SessionManager {
             this.sessions.set(chatId, session);
         }
     }
-    getTransferType(chatId: number): 'email' | 'walletAddress' {
-        return this.sessions.get(chatId)?.transferData?.type as 'email' | 'walletAddress';
+    getTransferType(chatId: number): TransferType {
+        return this.sessions.get(chatId)?.transferData?.type as TransferType;
     }
 
     setTransferWallet(chatId: number, walletAddress: string) {

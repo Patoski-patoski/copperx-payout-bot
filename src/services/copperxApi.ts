@@ -310,6 +310,36 @@ export class CopperxApiService {
     }
   }
 
+
+  async sendTransfer(request: EmailTransferRequest | WalletWithdrawalRequest,
+    type: 'email' | 'wallet') {
+    try {
+      const endpoint = '/api/transfers/send';
+      
+      const payload = type === 'wallet'
+        ? {
+          walletAddress: request.walletAddress,
+          amount: request.amount,
+          purposeCode: request.purposeCode,
+          currency: request.currency,
+          note: request.note
+        } as WalletWithdrawalRequest
+        : request;
+
+      const response = await this.api.post(endpoint, payload);
+      console.log("Transfer response:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Failed to send transfer:", {
+        statusCode: error.statusCode,
+        error: error.error,
+        message: error.message,
+      });
+      throw new Error(error.message
+        || 'Failed to send transfer. Please try again later.');
+    }
+  }
+
   
   async sendEmailTransfer(request: EmailTransferRequest) {
     try {
