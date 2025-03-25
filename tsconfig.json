@@ -16,7 +16,6 @@
       "@/*": ["src/*"]
     },
     "typeRoots": ["./node_modules/@types"],
-    "types": ["node", "node-telegram-bot-api"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
