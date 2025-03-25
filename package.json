@@ -4,7 +4,7 @@
   "description": "Telegram bot for Copperx Payout",
   "main": "dist/app.js",
   "scripts": {
-    "build": " npx rimraf ./dist && tsc",
+    "build": " npx rimraf ./dist && npx tsc",
     "start": "node dist/app.js",
     "preserve": "npm run build",
     "serve": "concurrently \"tsc -w\"  \"nodemon ./dist/app.js\""
