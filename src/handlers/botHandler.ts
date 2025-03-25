@@ -126,7 +126,6 @@ export class BotHandler {
     }
 
     private setupCallbackHandlers() {
-        // Add your callback handlers or delegate to specific handler classes
         this.bot.on('callback_query', async (callbackQuery) => {
             if (!callbackQuery.message) return;
 
@@ -136,6 +135,87 @@ export class BotHandler {
 
             try {
                 await this.bot.answerCallbackQuery(callbackQuery.id);
+
+                // Handle history pagination
+                // Handle pagination for transaction history
+                if (data.startsWith('history_page_')) {
+                    const page = parseInt(data.replace('history_page_', ''));
+                    if (!isNaN(page)) {
+                        const loadingMsg = await this.bot.sendMessage(
+                            chatId,
+                            '🔄 Loading more transactions...'
+                        );
+
+                        try {
+                            const transactions = await this.api.getTransactionsHistory(page, 10);
+                            await this.bot.deleteMessage(chatId, loadingMsg.message_id);
+
+                            if (!transactions.data || transactions.data.length === 0) {
+                                await this.bot.sendMessage(chatId,
+                                    '📪 No more transactions found.');
+                                return;
+                            }
+
+                            // Format transactions
+                            const formattedTransactions = transactions.data.map((tx: any, index: number) => {
+                                const date = new Date(tx.createdAt).toLocaleString();
+                                const amount = new Intl.NumberFormat('en-US', {
+                                    style: 'currency',
+                                    currency: tx.currency || 'USDC'
+                                }).format(Number(tx.amount));
+
+                                return `${((page - 1) * 10) + index + 1}. ${tx.type || 'Transfer'} - ${tx.status}\n` +
+                                    `   💰 Amount: ${amount}\n` +
+                                    `   📅 Date: ${date}\n` +
+                                    `   🆔 ID: ${tx.id}\n` +
+                                    (tx.recipientEmail ? `   📧 To: ${tx.recipientEmail}\n` : '') +
+                                    (tx.note ? `   📝 Note: ${tx.note}\n` : '') +
+                                    '───────────────';
+                            }).join('\n');
+
+                            // Navigation buttons
+                            const keyboard = [
+                                [
+                                    page > 1 ? {
+                                        text: '⬅️ Previous',
+                                        callback_data: `history_page_${page - 1}`
+                                    } : null,
+                                    {
+                                        text: '🔄 Refresh',
+                                        callback_data: `history_page_${page}`
+                                    },
+                                    transactions.data.length === 10 ? {
+                                        text: 'Next ➡️',
+                                        callback_data: `history_page_${page + 1}`
+                                    } : null
+                                ].filter(Boolean) // Remove null values
+                            ];
+
+                            await this.bot.sendMessage(chatId,
+                                `📜 *Transactions (Page ${page})*\n\n${formattedTransactions}`, {
+                                parse_mode: 'Markdown',
+                                reply_markup: {
+                                    inline_keyboard: keyboard as TelegramBot.InlineKeyboardButton[][]
+                                }
+                            });
+                        } catch (error) {
+                            console.error('Error fetching transactions:', error);
+                            await this.bot.deleteMessage(chatId, loadingMsg.message_id);
+                            await this.bot.sendMessage(chatId,
+                                '❌ Failed to load transactions. Please try again.');
+                        }
+                    }
+                    return;
+                }
+
+               
+
+                // Original refresh_history handler
+                if (data === 'refresh_history') {
+                    await this.historyHandler.handleHistory(
+                        { chat: { id: chatId } } as TelegramBot.Message);
+                    return;
+                }
 
                 if (data.startsWith('bulk_purpose_')) {
                     const purpose = data.replace('bulk_purpose_', '');
@@ -274,12 +354,12 @@ export class BotHandler {
                     await this.walletHandler.handleWallets(callbackQuery.message);
                 }
 
-                
+
                 if (data.startsWith('transfer_type_')) {
                     const type = data.replace('transfer_type_', '') as TransferType;
                     await this.transferHandler.handleTransferTypeSelection(chatId, type);
                 }
-                
+
 
                 // Handle other callback queries...
                 if (callbackQuery.data === 'check_kyc_status') {

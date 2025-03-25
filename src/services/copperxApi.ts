@@ -255,7 +255,7 @@ export class CopperxApiService {
 
   // Set default wallet
   async setDefaultWallet(walletId: string): Promise<CopperxWallet> {
-    try { 
+    try {
       const response = await this.api.post(
         `/api/wallets/default`,
         { walletId });
@@ -274,7 +274,7 @@ export class CopperxApiService {
   }
 
   // Get default walletAddress
-  async getDefaultWallet(): Promise<CopperxWallet > {
+  async getDefaultWallet(): Promise<CopperxWallet> {
     try {
       const response = await this.getWallets();
       const defaultWallet = response.find((wallet: CopperxWallet) => wallet.isDefault);
@@ -297,63 +297,63 @@ export class CopperxApiService {
   // Get all transactions
   async getTransactionsHistory(page: number = 1, limit: number = 10) {
     try {
-      const response = await this.api.get(`/api/transfers`, {
+      const response = await this.api.get('/api/transfers', {
         params: { page, limit }
       });
+      console.log('Transaction history response:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Failed to get transactions:", {
+      console.error('Failed to fetch transaction history:', {
         statusCode: error.statusCode,
         error: error.error,
         message: error.message,
       });
-
       throw new Error(
         error.message ||
-        'Failed to get transactions. Please try again later.'
+        'Failed to fetch transaction history. Please try again later.'
       );
     }
   }
 
-   async getAccounts(): Promise<AccountsResponse> {
-        try {
-            const response = await this.api.get('/api/accounts');
-            console.log("Accounts response:", response.data);
-            return response.data;
-        } catch (error: any) {
-            console.error("Failed to fetch accounts:", {
-                statusCode: error.statusCode,
-                error: error.error,
-                message: error.message,
-            });
-            throw new Error(
-                error.message ||
-                'Failed to fetch accounts. Please try again later.'
-            );
-        }
+  async getAccounts(): Promise<AccountsResponse> {
+    try {
+      const response = await this.api.get('/api/accounts');
+      console.log("Accounts response:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Failed to fetch accounts:", {
+        statusCode: error.statusCode,
+        error: error.error,
+        message: error.message,
+      });
+      throw new Error(
+        error.message ||
+        'Failed to fetch accounts. Please try again later.'
+      );
     }
+  }
 
-    async getDefaultBankAccount(): Promise<CopperxAccount | null> {
-        try {
-            const response = await this.getAccounts();
-            const defaultAccount = response.data.find(account => 
-                account.isDefault && 
-                account.bankAccount && 
-                account.status === 'active'
-            );
-            return defaultAccount || null;
-        } catch (error) {
-            console.error("Failed to get default bank account:", error);
-            throw error;
-        }
+  async getDefaultBankAccount(): Promise<CopperxAccount | null> {
+    try {
+      const response = await this.getAccounts();
+      const defaultAccount = response.data.find(account =>
+        account.isDefault &&
+        account.bankAccount &&
+        account.status === 'active'
+      );
+      return defaultAccount || null;
+    } catch (error) {
+      console.error("Failed to get default bank account:", error);
+      throw error;
     }
+  }
 
 
   async sendTransfer(request: EmailTransferRequest | WalletWithdrawalRequest,
     type: 'email' | 'wallet') {
     try {
       const endpoint = '/api/transfers/send';
-      
+
       const payload = type === 'wallet'
         ? {
           walletAddress: request.walletAddress,

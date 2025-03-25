@@ -16,18 +16,18 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 
 ## 📋 Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `/start` | Get started with the bot |
-| `/login` | Login to your Copperx account |
-| `/logout` | Logout from your account |
-| `/wallets` | View your wallets |
-| `/balance` | Check wallet balances |
-| `/default` | View and set default wallet |
-| `/send` | Send funds to email or wallet address |
-| `/history` | View transaction history |
-| `/kyc` | Check KYC verification status |
-| `/profile` | View your account profile |
+| Command    | Description                           |
+| ---------- | ------------------------------------- |
+| `/start`   | Get started with the bot              |
+| `/login`   | Login to your Copperx account         |
+| `/logout`  | Logout from your account              |
+| `/wallets` | View your wallets                     |
+| `/balance` | Check wallet balances                 |
+| `/default` | View and set default wallet           |
+| `/send`    | Send funds to email or wallet address |
+| `/history` | View transaction history              |
+| `/kyc`     | Check KYC verification status         |
+| `/profile` | View your account profile             |
 
 ## 🛠️ Technical Architecture
 

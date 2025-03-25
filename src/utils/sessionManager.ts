@@ -49,6 +49,7 @@ interface UserSession {
         preferredBankAccountId?: string;
     },
     bulkTransfer?: BulkTransferSession;
+    historyPageSize?: number;
 }
 
 export class SessionManager {
@@ -384,6 +385,18 @@ export class SessionManager {
             session.bulkTransfer = undefined;
             this.sessions.set(chatId, session);
         }
+    }
+
+    setHistoryPageSize(chatId: number, pageSize: number) {
+        const session = this.sessions.get(chatId);
+        if (session) {
+            session.historyPageSize = pageSize;
+            this.sessions.set(chatId, session);
+        }
+    }
+
+    getHistoryPageSize(chatId: number): number | undefined {
+        return this.sessions.get(chatId)?.historyPageSize;
     }
     // clear the session
     clearSession(chatId: number) {
