@@ -1,7 +1,26 @@
-
 export const BOT_MESSAGES = {
         WELCOME: `
-Welcome to Copperx Payout Bot! ©🚀
+🚀 Welcome to Copperx Payout Bot!
+
+This bot helps you manage your Copperx wallet and transactions right from Telegram.
+
+🔑 Key Features:
+• Wallet Management
+• Fund Transfers
+• Balance Checking
+• Transaction History
+• KYC Verification
+
+🏁 Get Started:
+1. Use /login to connect your account
+2. Check /help for all commands
+
+🔐 Security Note:
+• Never share your OTP
+• Always verify transaction details
+• Logout when done using /logout
+
+Need help? Join @copperxcommunity
 
 Here are the available commands:
 /login - Login to your Copperx account
@@ -119,4 +138,4 @@ Please confirm this transfer.`,
 The recipient will be notified via email.`,
 
         TRANSFER_ERROR: 'Transfer failed: %message%',
-    };
+};

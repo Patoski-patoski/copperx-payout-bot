@@ -1,6 +1,7 @@
 // src/services/copperxApi
 
 import axios, { AxiosInstance } from 'axios';
+import rateLimit from 'express-rate-limit';
 import { config } from '../config/config';
 import {
   CopperxAuthResponse,
@@ -25,6 +26,9 @@ export class CopperxApiService {
   private api: AxiosInstance;
   private token: string | null = null;
   private readonly MAX_RETRIES = 3;
+  private rateLimit: Map<string, { count: number, timestamp: number }>;
+  private readonly RATE_LIMIT = 30; 
+  private readonly TIME_WINDOW = 60 * 1000; // 1 minute
   private readonly RETRY_DELAY = 2000
 
   constructor() {
@@ -37,6 +41,7 @@ export class CopperxApiService {
       timeout: 15000,
       validateStatus: (status) => status < 500 // Handle 4xx errors in catch block
     });
+    this.rateLimit = new Map();
 
     // Response interceptor for error handling
     this.api.interceptors.response.use(

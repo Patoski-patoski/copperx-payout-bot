@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "description": "Telegram bot for Copperx Payout",
   "main": "dist/app.js",
-  "scripts": {
-    "test": "test",
-    "build": " rimraf ./dist & npx tsc",
-    "preserve": "npm run build",
-    "serve": "concurrently \"npx tsc -w\"  \"nodemon ./dist/app.js\""
+ "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "start:prod": "node dist/app.js",
+    "postinstall": "npm run build"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   },
   "keywords": [
     "telegram",
@@ -22,6 +25,7 @@
     "axios": "^1.6.7",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
     "node-telegram-bot-api": "^0.66.0",
     "pusher-js": "^8.4.0-rc2",
     "winston": "^3.11.0"

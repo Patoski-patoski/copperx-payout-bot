@@ -14,20 +14,21 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 - **KYC Verification**: Check KYC status and complete verification process
 - **Profile Management**: View and manage your Copperx account details
 
-## 📋 Available Commands
+## 🤖 Available Commands
 
-| Command    | Description                           |
-| ---------- | ------------------------------------- |
-| `/start`   | Get started with the bot              |
-| `/login`   | Login to your Copperx account         |
-| `/logout`  | Logout from your account              |
-| `/wallets` | View your wallets                     |
-| `/balance` | Check wallet balances                 |
-| `/default` | View and set default wallet           |
-| `/send`    | Send funds to email or wallet address |
-| `/history` | View transaction history              |
-| `/kyc`     | Check KYC verification status         |
-| `/profile` | View your account profile             |
+| Command | Description |
+|---------|-------------|
+| /start | Initialize the bot |
+| /login | Start authentication process |
+| /logout | End current session |
+| /profile | View user profile |
+| /wallets | List all wallets |
+| /balance | Check wallet balance |
+| /send | Initiate a transfer |
+| /withdraw | Start bank withdrawal |
+| /bulk | Start bulk transfer |
+| /history | View transaction history |
+| /kyc | Check KYC status |
 
 ## 🛠️ Technical Architecture
 
@@ -42,22 +43,28 @@ The bot is built with Node.js and TypeScript with a modular architecture:
 
 ```bash
 src/
-├── handlers/                # Command and event handlers
-│   ├── authHandler.ts       # Authentication functionality
-│   ├── botHandler.ts        # Main bot orchestration
-│   ├── profileHandler.ts    # Profile and KYC handling
-│   ├── transferHandler.ts   # Transfer functionality
-│   └── walletHandler.ts     # Wallet management
+├── handlers/                    # Command and event handlers
+│   ├── authHandler.ts           # Authentication functionality
+│   ├── botHandler.ts            # Main bot orchestration
+│   ├── profileHandler.ts        # Profile and KYC handling
+│   ├── baseHandler.ts           # Base file
+│   ├── bankWithdrawalHandler.ts # Transfer payment functionality
+│   ├── bulkWithdrawalHandler.ts # Bulk Transfer payment
+│   ├── transferHandler.ts       # Transfer payment functionality
+│   ├── historyHandler.ts        # Transaction history
+│   └── walletHandler.ts         # Wallet management
 ├── services/
-│   └── copperxApi.ts        # API communication service
+│   └── copperxApi.ts            # API communication service
 ├── types/
-│   └── copperx.ts           # TypeScript interfaces
+│   └── copperx.ts               # TypeScript interfaces
+│   └── index.ts                 # TypeScript interfaces
 ├── utils/
-│   ├── messageTemplates.ts  # Message templates
-│   └── sessionManager.ts    # User session handling
+│   ├── messageTemplates.ts      # Message templates
+│   └── sessionManager.ts        # User session handling
+│   └── copperxUtils.ts          # Utility handling
 ├── config/
-│   └── config.ts            # Configuration management
-└── app.ts                   # Application entry point
+│   └── config.ts                # Configuration management
+└── app.ts                       # Application entry point
 ```
 
 ## 🔐 Security Features
@@ -115,6 +122,42 @@ src/
 npm test         # Run all tests
 npm run test:ci  # Run tests in CI environment
 ```
+
+## 🚀 Deployment on Render
+
+### Prerequisites_
+
+- Node.js 16+
+- npm or yarn
+- A Render account
+- Telegram Bot Token
+
+### Deployment Steps
+
+1. Fork/clone this repository
+2. Sign up on [Render](https://render.com)
+3. Create a new Web Service
+4. Connect your repository
+5. Add environment variables:
+   - `BOT_TOKEN`: Your Telegram bot token
+   - `NODE_ENV`: Set to `production`
+   - `API_BASE_URL`: Your API URL
+6. Deploy!
+
+### Monitoring
+
+- Check the health endpoint: `https://your-app.onrender.com/health`
+- View logs in Render dashboard
+- Monitor bot status in Telegram
+
+### Troubleshooting
+
+If the bot stops responding:
+
+1. Check Render logs
+2. Verify environment variables
+3. Ensure bot token is valid
+4. Check API endpoint status
 
 ## 📝 License
 
