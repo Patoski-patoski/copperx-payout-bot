@@ -5,7 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "test": "test",
-    "build": "npx rimraf ./dist & npx tsc",
+    "build": "npx rimraf ./dist && npx tsc",
     "preserve": "npm run build",
     "serve": "concurrently \"npx tsc -w\"  \"nodemon ./dist/app.js\""
   },
