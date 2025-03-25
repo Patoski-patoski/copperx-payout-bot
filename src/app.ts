@@ -16,3 +16,5 @@ class App {
 
 const app = new App();
 app.start();
+
+export default App;

@@ -1,22 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
-    "lib": ["ES2020", "DOM"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
-    "typeRoots": ["./node_modules/@types"],
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "lib": ["ES2020"], // Include modern JS features
+    "module": "commonjs", // Node.js uses CommonJS modules
+    "target": "ES2020", // Target modern JS
+    "moduleResolution": "node", // Resolve modules in Node.js style
+    "esModuleInterop": true, // For interop with CommonJS modules
+    "types": ["node"], // Include Node.js types
+    "skipLibCheck": true, // Ignore library checking (optional)
+    "forceConsistentCasingInFileNames": true
+  }
 }
