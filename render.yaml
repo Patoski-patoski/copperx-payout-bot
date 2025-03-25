@@ -11,5 +11,4 @@ services:
         sync: false
       - key: API_BASE_URL
         value: https://api.copperx.io
-    healthCheckPath: /health
     autoDeploy: true

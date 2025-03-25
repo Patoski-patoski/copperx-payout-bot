@@ -9,9 +9,6 @@
     "preserve": "npm run build",
     "serve": "concurrently \"npx tsc -w\"  \"nodemon ./dist/app.js\""
   },
-  "engines": {
-    "node": ">=16.0.0"
-  },
   "keywords": [
     "telegram",
     "bot",
@@ -32,8 +29,8 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/node": "^20.17.27",
-    "@types/node-telegram-bot-api": "^0.64.8",
+    "@types/node": "^20.11.19",
+    "@types/node-telegram-bot-api": "^0.64.2",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
