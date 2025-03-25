@@ -26,10 +26,11 @@ export class CopperxApiService {
   private api: AxiosInstance;
   private token: string | null = null;
   private readonly MAX_RETRIES = 3;
-  private rateLimit: Map<string, { count: number, timestamp: number }>;
-  private readonly RATE_LIMIT = 30; 
+  private readonly RATE_LIMIT = 30;
   private readonly TIME_WINDOW = 60 * 1000; // 1 minute
-  private readonly RETRY_DELAY = 2000
+  private readonly RETRY_DELAY = 2000;
+  private rateLimit: Map<string, number[]>;
+
 
   constructor() {
     this.api = axios.create({
@@ -42,6 +43,12 @@ export class CopperxApiService {
       validateStatus: (status) => status < 500 // Handle 4xx errors in catch block
     });
     this.rateLimit = new Map();
+
+    // Add request interceptor for rate limiting
+    this.api.interceptors.request.use(async (config) => {
+      await this.checkRateLimit(config.url || '');
+      return config;
+    });
 
     // Response interceptor for error handling
     this.api.interceptors.response.use(
@@ -71,15 +78,23 @@ export class CopperxApiService {
     );
   }
 
-  private async retry<T>(operation: string, fn: () => Promise<T>): Promise<T> {
-    let lastError: any;
-
+  // Update retry method to handle rate limit errors
+  async retry(operation: string, fn: () => Promise<any>) {
+    let lastError;
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         console.log(`${operation}: Attempt ${attempt}/${this.MAX_RETRIES}`);
         return await fn();
       } catch (error: any) {
         lastError = error;
+
+        // If it's a rate limit error, wait for the specified time
+        if (error.message?.includes('Rate limit exceeded')) {
+          const waitTime = parseInt(error.message.match(/\d+/)[0]) * 1000;
+          console.log(`${operation}: Rate limit hit, waiting ${waitTime / 1000}s`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
 
         if (this.isRetryableError(error) && attempt < this.MAX_RETRIES) {
           console.log(`${operation}: Retrying after error:`, {
@@ -92,11 +107,10 @@ export class CopperxApiService {
         break;
       }
     }
-
     console.error(`${operation}: All retry attempts failed:`, lastError);
     throw lastError;
   }
-
+  
   private isRetryableError(error: any): boolean {
     const retryableCodes = ['ETIMEDOUT', 'ECONNABORTED', 'ECONNREFUSED'];
     const retryableMessages = ['timeout', 'Network Error'];
@@ -132,6 +146,25 @@ export class CopperxApiService {
     );
   }
 
+  private async checkRateLimit(endpoint: string): Promise<void> {
+    const now = Date.now();
+    const key = endpoint;
+    const requests = this.rateLimit.get(key) || [];
+
+    // Remove requests outside the time window
+    const validRequests = requests.filter(time => time > now - this.TIME_WINDOW);
+
+    if (validRequests.length >= this.RATE_LIMIT) {
+      const oldestRequest = validRequests[0];
+      const timeToWait = oldestRequest + this.TIME_WINDOW - now;
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(timeToWait / 1000)} seconds.`);
+    }
+
+    validRequests.push(now);
+    this.rateLimit.set(key, validRequests);
+  }
+
   // Authentication methods
   async requestEmailOtp(email: string): Promise<EmailOtpResponse> {
     return this.retry('Request Email OTP', async () => {
@@ -150,7 +183,8 @@ export class CopperxApiService {
   }
 
 
-  async verifyEmailOtp(email: string, otp: string, sid: string): Promise<CopperxAuthResponse> {
+  async verifyEmailOtp(email: string, otp: string, sid: string)
+    : Promise<CopperxAuthResponse> {
     return this.retry('Verify Email OTP', async () => {
       try {
         const response = await this.api.post('/api/auth/email-otp/authenticate', {

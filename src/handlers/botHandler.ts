@@ -31,6 +31,9 @@ export class BotHandler {
             polling: {
                 interval: 3000,
                 autoStart: true,
+                params: {
+                    timeout: 30
+                }
             }
         });
         this.api = new CopperxApiService();
@@ -48,6 +51,11 @@ export class BotHandler {
         this.setupCommands();
         this.setupMessageHandlers();
         this.setupCallbackHandlers();
+
+    
+    }
+    getBot(): TelegramBot {
+        return this.bot;
     }
 
     private setupCommands() {
