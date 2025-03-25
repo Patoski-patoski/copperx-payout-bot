@@ -10,6 +10,11 @@ import {
   CopperxWalletBalance,
   EmailTransferRequest,
   WalletWithdrawalRequest,
+  OffRampQuoteRequest,
+  BankWithdrawalRequest,
+  CopperxAccount,
+  AccountsResponse,
+  BulkTransferPayload,
 } from '../types/copperx';
 
 import {
@@ -310,6 +315,39 @@ export class CopperxApiService {
     }
   }
 
+   async getAccounts(): Promise<AccountsResponse> {
+        try {
+            const response = await this.api.get('/api/accounts');
+            console.log("Accounts response:", response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error("Failed to fetch accounts:", {
+                statusCode: error.statusCode,
+                error: error.error,
+                message: error.message,
+            });
+            throw new Error(
+                error.message ||
+                'Failed to fetch accounts. Please try again later.'
+            );
+        }
+    }
+
+    async getDefaultBankAccount(): Promise<CopperxAccount | null> {
+        try {
+            const response = await this.getAccounts();
+            const defaultAccount = response.data.find(account => 
+                account.isDefault && 
+                account.bankAccount && 
+                account.status === 'active'
+            );
+            return defaultAccount || null;
+        } catch (error) {
+            console.error("Failed to get default bank account:", error);
+            throw error;
+        }
+    }
+
 
   async sendTransfer(request: EmailTransferRequest | WalletWithdrawalRequest,
     type: 'email' | 'wallet') {
@@ -340,69 +378,52 @@ export class CopperxApiService {
     }
   }
 
-  
-  async sendEmailTransfer(request: EmailTransferRequest) {
+  async getOffRampQuote(request: OffRampQuoteRequest): Promise<any> {
     try {
-      const response = await this.api.post('/api/transfers/send', request);
-      console.log("Email transfer response:", response.data);
+      const response = await this.api.post('/api/quotes/offramp', request);
+      console.log("Offramp quote response:", response.data);
       return response.data;
-      
     } catch (error: any) {
-      console.error("Failed to send email transfer:", {
+      console.error("Failed to get offramp quote:", {
         statusCode: error.statusCode,
         error: error.error,
         message: error.message,
       });
-      throw new Error(
-        error.message ||
-        'Failed to send email transfer. Please try again later.'
-      );
+      throw new Error(error.message
+        || 'Failed to get withdrawal quote. Please try again later.');
     }
   }
 
-  async sendWalletWithdrawal(request: WalletWithdrawalRequest): Promise<any> {
+  async sendBankWithdrawal(request: BankWithdrawalRequest): Promise<any> {
     try {
-      const response = await this.api.post('/api/transfers/wallet-withdraw', request);
-      // console.log("Wallet withdrawal response:", response.data);
+      const response = await this.api.post('/api/transfers/offramp', request);
+      console.log("Bank withdrawal response:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Failed to send wallet withdrawal:", {
+      console.error("Failed to send bank withdrawal:", {
         statusCode: error.statusCode,
         error: error.error,
         message: error.message,
       });
-      throw new Error(
-        error.message ||
-        'Failed to send wallet withdrawal. Please try again later.'
-      );
+      throw new Error(error.message
+        || 'Failed to send bank withdrawal. Please try again later.');
     }
   }
 
-//   // Send funds
-//   async sendFunds(params: {
-//     recipient: string;
-//     amount: string;
-//     currency: string;
-//     type: 'email' | 'walletAddress';
-//   }): Promise<{ success: boolean; transactionId: string }> {
-//     try {
-//       const endpoint = params.type === 'email'
-//         ? '/api/transfers/send'
-//       : '/api/transfers/wallet-withdraw';
+  async sendBulkTransfer(payload: BulkTransferPayload): Promise<any> {
+    try {
+      const response = await this.api.post('/api/transfers/send-batch', payload);
+      console.log("Bulk transfer response:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Failed to send bulk transfer:", {
+        statusCode: error.statusCode,
+        error: error.error,
+        message: error.message,
+      });
+      throw new Error(error.message || 'Failed to process bulk transfer. Please try again later.');
+    }
+  }
 
-//       const response = await this.api.post(endpoint, params);
-//       return response.data;
-//     } catch (error: any) {
-//       console.error("Failed to send funds:", {
-//         statusCode: error.statusCode,
-//         error: error.error,
-//         message: error.message,
-//       });
 
-//       throw new Error(
-//         error.message ||
-//         `Failed to send via ${params.type}. Please try again later.`
-//       );
-//     }
-//   }
 } 

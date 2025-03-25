@@ -9,6 +9,7 @@ Here are the available commands:
 /send - Send funds
 /history - View your transaction history
 /help - Show this help message
+/logout - Logout from your Copperx account
 
 Need support? Visit https://t.me/copperxcommunity/2183`,
 
@@ -45,6 +46,9 @@ You can now:
 - Use /default to view your default wallet.
 - Use /kyc to check your KYC status.
 - Use /send to send funds.
+- Use /bulk to bulk transfer funds.
+- Use /add_recipient to add a recipient to your bulk transfer list.
+- Use /review to review your bulk transfer list.
 - Use /profile to view your Copperx information
 - Use /history to view your transaction history.
 - Use /help to show this help message.

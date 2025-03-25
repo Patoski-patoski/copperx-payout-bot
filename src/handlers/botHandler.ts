@@ -8,6 +8,8 @@ import { WalletHandler } from './walletHandler';
 import { TransferHandler } from './transferHandler';
 import { ProfileHandler } from './profileHandler';
 import { HistoryHandler } from './historyHandler';
+import { BankWithdrawalHandler } from './bankWithdrawalHandler';
+import { BulkTransferHandler } from './bulkTransferHandler';
 import { BOT_MESSAGES } from '../utils/messageTemplates';
 import { TransferType } from '@/types/copperx';
 
@@ -22,7 +24,8 @@ export class BotHandler {
     private transferHandler: TransferHandler;
     private profileHandler: ProfileHandler;
     private historyHandler: HistoryHandler;
-
+    private bankWithdrawalHandler: BankWithdrawalHandler;
+    private bulkTransferHandler: BulkTransferHandler;
     constructor() {
         this.bot = new TelegramBot(config.telegram.botToken, {
             polling: {
@@ -39,6 +42,8 @@ export class BotHandler {
         this.transferHandler = new TransferHandler(this.bot, this.api, this.sessions);
         this.profileHandler = new ProfileHandler(this.bot, this.api, this.sessions);
         this.historyHandler = new HistoryHandler(this.bot, this.api, this.sessions);
+        this.bankWithdrawalHandler = new BankWithdrawalHandler(this.bot, this.api, this.sessions);
+        this.bulkTransferHandler = new BulkTransferHandler(this.bot, this.api, this.sessions);
 
         this.setupCommands();
         this.setupMessageHandlers();
@@ -58,6 +63,11 @@ export class BotHandler {
             { command: /\/default/, handler: this.walletHandler.handleDefault.bind(this.walletHandler) },
             { command: /\/send/, handler: this.transferHandler.handleSend.bind(this.transferHandler) },
             { command: /\/transfer/, handler: this.transferHandler.handleSend.bind(this.transferHandler) },
+            { command: /\/withdraw/, handler: this.bankWithdrawalHandler.handleWithdraw.bind(this.bankWithdrawalHandler) },
+            { command: /\/bulk/, handler: this.bulkTransferHandler.handleBulkTransfer.bind(this.bulkTransferHandler) },
+            { command: /\/add_recipient/, handler: this.bulkTransferHandler.handleAddRecipient.bind(this.bulkTransferHandler) },
+            { command: /\/review/, handler: this.bulkTransferHandler.handleReview.bind(this.bulkTransferHandler) }
+
         ];
 
         commands.forEach(({ command, handler }) => {
@@ -102,6 +112,9 @@ export class BotHandler {
                 case 'WAITING_TRANSFER_NOTE':
                     await this.transferHandler.handleTransferNote(chatId, text);
                     break;
+                case 'WAITING_WITHDRAWAL_AMOUNT':
+                    await this.bankWithdrawalHandler.handleWithdrawalAmount(chatId, text);
+                    break;
                 default:
                     await this.bot.sendMessage(
                         chatId,
@@ -124,6 +137,23 @@ export class BotHandler {
             try {
                 await this.bot.answerCallbackQuery(callbackQuery.id);
 
+                if (data.startsWith('bulk_purpose_')) {
+                    const purpose = data.replace('bulk_purpose_', '');
+                    await this.bulkTransferHandler.handlePurposeSelection(chatId, purpose);
+                    return;
+                }
+
+                if (data === 'bulk_confirm') {
+                    await this.bulkTransferHandler.processBulkTransfer(chatId);
+                    return;
+                }
+
+                if (data === 'bulk_cancel') {
+                    this.sessions.clearBulkTransferData(chatId);
+                    await this.bot.sendMessage(chatId, '❌ Bulk transfer cancelled');
+                    return;
+                }
+
                 // Handle transfer purpose selection
                 if (callbackQuery.data?.startsWith('transfer_purpose:')) {
                     await this.bot.answerCallbackQuery(callbackQuery.id);
@@ -137,6 +167,21 @@ export class BotHandler {
 
                     // Update session state
                     this.sessions.setState(chatId, 'WAITING_TRANSFER_NOTE');
+                    return;
+                }
+
+                // Handle withdrawal purpose selection
+                if (data.startsWith('withdraw_purpose_')) {
+                    const purpose = data.replace('withdraw_purpose_', '');
+                    await this.bankWithdrawalHandler.handlePurposeSelection(chatId, purpose);
+                    return;
+                }
+
+                // Handle withdrawal cancellation
+                if (data === 'withdraw_cancel') {
+                    await this.bot.sendMessage(chatId, '❌ Withdrawal cancelled.');
+                    this.sessions.clearWithdrawalData(chatId);
+                    this.sessions.setState(chatId, 'AUTHENTICATED');
                     return;
                 }
 

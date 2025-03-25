@@ -96,20 +96,92 @@ export interface WalletWithdrawalRequest extends BaseTransferRequest {
     walletAddress: string;
 }
 
-export interface BankWithdrawalRequest {
+// api/quotes/offramp
+export interface OffRampQuoteRequest{
+    sourceCountry: string;
+    destinationCountry: string;
     amount: string;
-    asset: string;
-    bankAccountId: string;
-    memo?: string;
+    currency: string;
+    onlyRemittance: boolean;
+    preferredBankAccountId?: string;
+    // Optional fields
+    preferredDestinationPaymentMethods?: string[];
+    preferredProviderId?: string;
+    thirdPartyPayment?: boolean;
+    destinationCurrency?: string;
+    payeeId?: string;
+
+}
+
+// api/transfers/offramp
+export interface BankWithdrawalRequest {
+    purposeCode: string;
+    quotePayload: string;
+    quoteSignature: string;
+    preferredWalletId: string;
+    // Optional fields
+    invoiceNumber?: string;
+    note?: string;
+    invoiceUrl?: string;
+    sourceOfFundsFile?: string;
+    recipientRelationship?: string;
+    customerData?: {
+        name?: string;
+        businessName?: string;
+        email?: string;
+        country?: string;
+    };
+}
+export interface BankAccountDetails {
+    bankName: string;
+    bankAddress: string;
+    method: string;
+    bankAccountType: string;
+    bankRoutingNumber: string;
+    bankAccountNumber: string;
+    bankBeneficiaryName: string;
+    swiftCode: string;
+}
+
+export interface AccountKyc {
+    id: string;
+    status: string;
+    supportRemittance: boolean;
+    providerCode: string;
+}
+
+export interface CopperxAccount {
+    id: string;
+    type: string;
+    walletAccountType: string;
+    method: string;
+    country: string;
+    network: string;
+    walletAddress: string;
+    isDefault: boolean;
+    bankAccount: BankAccountDetails;
+    accountKycs: AccountKyc[];
+    status: string;
+}
+
+export interface AccountsResponse {
+    data: CopperxAccount[];
 }
 
 export interface BulkTransferRequest {
-    asset: string;
-    transfers: {
-        recipientEmail: string;
+    requestId: string;
+    request: {
+        walletAddress?: string;
+        email?: string;
+        payeeId?: string;
         amount: string;
-        memo?: string;
-    }[];
+        purposeCode: string;
+        currency: string;
+    };
+}
+
+export interface BulkTransferPayload {
+    requests: BulkTransferRequest[];
 }
 
 export interface TransferResponse {

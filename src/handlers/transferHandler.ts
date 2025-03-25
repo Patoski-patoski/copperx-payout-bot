@@ -295,36 +295,19 @@ export class TransferHandler extends BaseHandler {
             const response = await this.api.sendTransfer(request, transferType);
             await this.bot.deleteMessage(chatId, loadingMsg.message_id);
 
-            // if (response && response.error) {
-            //     await this.bot.sendMessage(
-            //         chatId,
-            //         this.BOT_MESSAGES.TRANSFER_ERROR.replace(
-            //             '%message%', response.error
-            //         )
-            //     );
-            //     return;
-            // }          
+            if (response && response.error) {
+                await this.bot.sendMessage(
+                    chatId,
+                    this.BOT_MESSAGES.TRANSFER_ERROR.replace(
+                        '%message%', response.error
+                    )
+                );
+                return;
+            }          
 
             await this.showTransferSuccess(chatId, response);
             console.log('Transfer response: ', response);
           
-            // Show success message
-            // const successMessage = this.BOT_MESSAGES.TRANSFER_SUCCESS
-            //     .replace('%id%', response.id)
-            //     .replace('%status%', response.status)
-            //     .replace('%amount%', response.amount)
-            //     .replace('%currency%', response.currency)
-            //     .replace('%recipient%', response.customer.name)
-            //     .replace('%recipient_email%', response.customer.email);
-
-            // console.log('Success message: ', successMessage);
-
-            // await this.bot.sendMessage(
-            //     chatId,
-            //     successMessage,
-            //     { parse_mode: 'Markdown' }
-            // );
-
             // Clear transfer data and reset state
             this.sessions.clearTransferData(chatId);
             this.sessions.setState(chatId, 'AUTHENTICATED');
@@ -335,7 +318,7 @@ export class TransferHandler extends BaseHandler {
                 chatId,
                 this.BOT_MESSAGES.TRANSFER_ERROR.replace(
                     '%message%',
-                    error.message && 'Please try again'
+                    error.message || 'Please try again'
                 )
             );
         }
@@ -401,23 +384,8 @@ export class TransferHandler extends BaseHandler {
         }
         successMessage += `\nTransaction ID: \`${response.transactionId}\``;
 
-        // Add view transaction button if you have a transaction explorer
-        const keyboard = [
-            [{
-                text: '📜 View Transaction History',
-                callback_data: 'refresh_history'
-            }],
-            [{
-                text: '📤 New Transfer',
-                callback_data: 'transfer_new'
-            }]
-        ];
-
         await this.bot.sendMessage(chatId, successMessage, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: keyboard
-            }
+            parse_mode: 'Markdown'
         });
     }
 } 
