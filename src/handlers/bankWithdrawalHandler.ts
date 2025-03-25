@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
-import { OffRampQuoteRequest, BankWithdrawalRequest } from '@/types/copperx';
+import { OffRampQuoteRequest, BankWithdrawalRequest } from '../types/copperx';
 
 export class BankWithdrawalHandler extends BaseHandler {
     async handleWithdraw(msg: TelegramBot.Message) {
