@@ -1,5 +1,8 @@
 import { BotHandler } from './handlers/botHandler';
 import { config } from './config/config';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 class App {
     private bot: BotHandler;
