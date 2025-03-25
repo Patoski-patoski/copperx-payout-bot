@@ -62,6 +62,7 @@ export class BotHandler {
         const commands = [
             { command: /\/start/, handler: this.handleStart.bind(this) },
             { command: /\/login/, handler: this.authHandler.handleLogin.bind(this.authHandler) },
+            { command: /\/help/, handler: this.authHandler.handleLogin.bind(this.authHandler) },
             { command: /\/logout/, handler: this.authHandler.handleLogout.bind(this.authHandler) },
             { command: /\/profile/, handler: this.profileHandler.handleProfile.bind(this.profileHandler) },
             { command: /\/kyc/, handler: this.profileHandler.handleKyc.bind(this.profileHandler) },
@@ -75,7 +76,6 @@ export class BotHandler {
             { command: /\/bulk/, handler: this.bulkTransferHandler.handleBulkTransfer.bind(this.bulkTransferHandler) },
             { command: /\/add_recipient/, handler: this.bulkTransferHandler.handleAddRecipient.bind(this.bulkTransferHandler) },
             { command: /\/review/, handler: this.bulkTransferHandler.handleReview.bind(this.bulkTransferHandler) }
-
         ];
 
         commands.forEach(({ command, handler }) => {
