@@ -3,12 +3,12 @@ services:
     name: copperx-telegram-bot
     env: node
     buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    startCommand: node dist/app.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: BOT_TOKEN
+      - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: API_BASE_URL
+      - key: COPPERX_API_BASE_URL
         value: https://api.copperx.io
     autoDeploy: true

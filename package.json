@@ -5,7 +5,8 @@
   "main": "dist/app.js",
   "scripts": {
     "test": "test",
-    "build": "npx rimraf ./dist && node_modules/.bin/tsc",
+    "build": "npx rimraf ./dist && npx tsc",
+    "start": "node dist/app.js",
     "preserve": "npm run build",
     "serve": "concurrently \"npx tsc -w\"  \"nodemon ./dist/app.js\""
   },
