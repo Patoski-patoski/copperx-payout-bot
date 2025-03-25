@@ -5,10 +5,10 @@
   "main": "dist/app.js",
   "scripts": {
     "test": "test",
-    "build": "npx rimraf ./dist && npx tsc",
+    "build": "npx tsc",
     "start": "node dist/app.js",
-    "preserve": "npm run build",
-    "serve": "concurrently \"npx tsc -w\"  \"nodemon ./dist/app.js\""
+    "preserwve": "npm run build",
+    "servee": "concurrently \"npx tsc -w\"  \"nodemon ./dist/app.js\""
   },
   "engines": {
     "node": "18.x"
