@@ -2,8 +2,10 @@ services:
   - type: web
     name: copperx-telegram-bot
     env: node
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: node dist/app.js
     envVars:
       - key: NODE_ENV
         value: production
