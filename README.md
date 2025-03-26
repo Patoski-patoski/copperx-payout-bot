@@ -29,6 +29,8 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 | /bulk | Start bulk transfer |
 | /history | View transaction history |
 | /kyc | Check KYC status |
+| /help | Get commands and info |
+
 
 ## 🛠️ Technical Architecture
 
