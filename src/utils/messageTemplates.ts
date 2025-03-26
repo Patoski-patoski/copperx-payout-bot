@@ -2,14 +2,17 @@ export const BOT_MESSAGES = {
         WELCOME: `
 🚀 Welcome to Copperx Payout Bot!
 
-This bot helps you manage your Copperx wallet and transactions right from Telegram.
+A Telegram bot for managing Copperx Payout wallets, transfers, and account services.
 
-🔑 Key Features:
-• Wallet Management
-• Fund Transfers
-• Balance Checking
-• Transaction History
-• KYC Verification
+## 🚀 Features
+
+- **User Authentication**: Secure login with email OTP verification
+- **Wallet Management**: View wallets across multiple networks, set default wallet
+- **Balance Tracking**: Check balances for all assets across wallets
+- **Fund Transfers**: Send funds to email addresses with various purpose codes
+- **Transaction History**: View recent transaction history
+- **KYC Verification**: Check KYC status and complete verification process
+- **Profile Management**: View and manage your Copperx account details
 
 🏁 Get Started:
 1. Use /login to connect your account
@@ -19,16 +22,6 @@ This bot helps you manage your Copperx wallet and transactions right from Telegr
 • Never share your OTP
 • Always verify transaction details
 • Logout when done using /logout
-
-Need help? Join @copperxcommunity
-
-Here are the available commands:
-/login - Login to your Copperx account
-/balance - Check your wallet balances
-/send - Send funds
-/history - View your transaction history
-/help - Show this help message
-/logout - Logout from your Copperx account
 
 Need support? Visit https://t.me/copperxcommunity/2183`,
 
@@ -57,23 +50,39 @@ walletAddress: \`%walletAddress%\`
 walletId: %walletId%
 walletAccountType: \`%walletAccountType%\``,
         LOGOUT_SUCCESS: '👋 Logged out successfully!\n\nUse /login to login again.',
-        LOGIN_SUCCESS: `✅ Login successful!
+        LOGIN_SUCCESS: `✅ Login Successful
+🎉 Welcome to Copperx Payout Bot!`,
+        HELP_MESSAGE: `
 
-You can now: 
-- Use /balance to check your wallet balances.
-- Use /wallets to view your wallets.
-- Use /default to view your default wallet.
-- Use /kyc to check your KYC status.
-- Use /send to send funds.
-- Use /bulk to bulk transfer funds.
-- Use /add_recipient to add a recipient to your bulk transfer list.
-- Use /review to review your bulk transfer list.
-- Use /profile to view your Copperx information
-- Use /history to view your transaction history.
-- Use /help to show this help message.
-- Use /logout to logout from your account.
+🚀 *Quick Start Guide:*
 
-Need support? Visit https://t.me/copperxcommunity/2183`,
+1️⃣ Use /login to connect your account.  
+2️⃣ Check /help for all available commands.  
+
+🛠️ *Available Commands:*
+
+🎯 *Wallet Management:*
+- 💰 /balance — Check wallet balances
+- 🏦 /wallets — View all wallets
+- ⭐ /default — View default wallet
+
+🎯 *Transactions:*
+- ✈️ /send — Send funds
+- 📦 /bulk — Bulk transfer funds
+- ➕ /add\\_recipient — Add recipient to bulk transfer
+- 🔍 /review — Review bulk transfer list
+
+🎯 *Account Information:*
+- 🆔 /profile — View Copperx profile
+- 🏷️ /kyc — Check KYC status
+- 📜 /history — View transaction history
+- ❓ /help — Show help message
+- 🚪 /logout — Logout of your account
+
+
+
+📣 Contact Support: https://t.me/copperxcommunity/2183`,
+
         KYC_NOT_AUTHENTICATED: '❌ Please login first using /login to view your KYC status',
         KYC_STATUS_TEMPLATE: `🔒 *KYC Verification Status*
 status: %status%

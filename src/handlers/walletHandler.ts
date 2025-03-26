@@ -205,10 +205,9 @@ export class WalletHandler extends BaseHandler {
                 }).join('\n');
 
                 const walletMessage =
-                    `*Wallet Details*\n\n` +
-                    `🆔 ID: \`${wallet.walletId}\`\n` +
-                    `${networkEmoji} Network: \`${networkName}\`\n` +
-                    `📝 Address: \`${walletAddress}\`\n\n` +
+                    `🆔 *ID*: \`${wallet.walletId}\`\n` +
+                    `${networkEmoji} *Network*: \`${networkName}\`\n` +
+                    `📝 *Address*: \`${walletAddress}\`\n\n` +
                     `*Balances*\n${balanceItems || '(No tokens found)'}`;
 
                 await this.bot.sendMessage(chatId, walletMessage, {
@@ -221,6 +220,16 @@ export class WalletHandler extends BaseHandler {
                     }
                 });
             }
+
+            await this.bot.sendMessage(chatId, '🔄 Balances refreshed successfully!', {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [[{
+                        text: '🔄 Refresh Balances',
+                        callback_data: 'refresh_balance'
+                    }]]
+                }
+            });
         } catch (error: any) {
             console.error('Error fetching balances:', error);
             await this.bot.sendMessage(

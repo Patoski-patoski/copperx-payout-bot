@@ -81,6 +81,10 @@ if (arr.length > 10) {
 }
 
 
+if(["jesus", "god", "lord"].includes("jesus")) {
+  console.log("jesus is in the array");
+}
+
 
 
 console.log(arr.length);

@@ -78,6 +78,9 @@ export class BotHandler {
             { command: /\/review/, handler: this.bulkTransferHandler.handleReview.bind(this.bulkTransferHandler) }
         ];
 
+        // Generic Message Listener
+        this.bot.on('message', this.handleMessage.bind(this));
+
         commands.forEach(({ command, handler }) => {
             this.bot.onText(command, handler);
         });
@@ -90,6 +93,21 @@ export class BotHandler {
             BOT_MESSAGES.WELCOME,
             { parse_mode: 'Markdown' }
         );
+    }
+
+    private async handleMessage(msg: TelegramBot.Message) {
+        if (!msg.text) return;
+        const chatId = msg.chat.id;
+        const sessionState = this.sessions.getState(chatId);
+
+        switch (sessionState) {
+            case 'WAITING_EMAIL':
+                await this.authHandler.handleEmailInput(chatId, msg.text);
+                break;
+            default:
+                await this.bot.sendMessage(chatId,
+                    "I didn't understand that. Press /help to see available commands.");
+        }
     }
 
     private setupMessageHandlers() {
@@ -375,8 +393,13 @@ export class BotHandler {
                     await this.profileHandler.handleKyc(callbackQuery.message);
                 }
 
-                if (callbackQuery.data && ['refresh_balance', 'view_balance'].includes(callbackQuery.data)) {
-                    await this.bot.sendMessage(chatId, '🔄 Refreshing balance...');
+                if (callbackQuery.data
+                    && ['refresh_balance', 'view_balance']
+                        .includes(callbackQuery.data)) {
+                    const loadingMsg = await this.bot.sendMessage(chatId,
+                        '🔄 Refreshing balance...'
+                    );
+                    await this.bot.deleteMessage(chatId, loadingMsg.message_id);
                     await this.walletHandler.handleBalance(callbackQuery.message);
                 }
 
