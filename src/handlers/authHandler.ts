@@ -3,6 +3,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import { CopperxAuthResponse } from '@/types/copperx';
+import { keyboard } from '../utils/copperxUtils';
 
 export class AuthHandler extends BaseHandler {
     async handleLogin(msg: TelegramBot.Message) {
@@ -23,7 +24,7 @@ export class AuthHandler extends BaseHandler {
             chatId,
             this.BOT_MESSAGES.ENTER_EMAIL, {
                 parse_mode: 'Markdown',
-                reply_markup: { inline_keyboard: keyboard }
+                reply_markup: { inline_keyboard: keyboard },
             }
         );
         // Set user state to waiting for email
@@ -91,7 +92,6 @@ export class AuthHandler extends BaseHandler {
     }
 
     // Handle OTP input
-
     async handleOtpInput(chatId: number, otp: string) {
         if (otp.length !== 6) {
             await this.bot.sendMessage(chatId, this.BOT_MESSAGES.INVALID_OTP);
@@ -107,8 +107,11 @@ export class AuthHandler extends BaseHandler {
             );
 
             await this.bot.sendMessage(chatId,
-                this.BOT_MESSAGES.HELP_MESSAGE,
-                { parse_mode: 'Markdown' }
+                this.BOT_MESSAGES.COMMANDS_MESSAGE,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: keyboard }
+                }
             );
 
         } catch (error: any) {

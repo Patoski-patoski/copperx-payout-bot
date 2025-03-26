@@ -41,25 +41,23 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
         PROFILE_NOT_AUTHENTICATED: '❌ Please login first using /login to view your profile',
         PROFILE_TEMPLATE: `👤 *User Profile*
 
-id: \`%id%\`
-firstName: %firstName%
-lastName: %lastName%
-email: \`%email%\`
-profileImage: %profileImage%
-organizationId: %organizationId%
-role: \`%role%\`
-status: %status%
-type: %type%
-relayerAddress: %relayerAddress%
-flags: [%flags%]
-walletAddress: \`%walletAddress%\`
-walletId: %walletId%
-walletAccountType: \`%walletAccountType%\``,
+*🆔 Copperx ID:* %id%
+
+*💌 Email:* %email%
+
+*👤 Role:* %role%
+
+*🔒 Status:* %status%
+
+*🏦 Relayer Address:* %relayerAddress%
+
+*💳 Wallet Address:* %walletAddress%
+
+*💳 Wallet Account Type:* %walletAccountType%`,
         LOGOUT_SUCCESS: '👋 Logged out successfully!\n\nUse /login to login again.',
-        LOGIN_SUCCESS: `✅ Login Successful
-🎉 Welcome to Copperx Payout Bot!`,
+        LOGIN_SUCCESS: `✅ Login Successful\n\n🎉 Welcome to Copperx Payout Bot!`,
         EXIT: `👋 Thank you for using Copperx Payout Bot!. Goodbye and have a great day!`,
-        HELP_MESSAGE: `
+        COMMANDS_MESSAGE: `
 
 🚀 *Quick Start Guide:*
 
@@ -90,7 +88,7 @@ walletAccountType: \`%walletAccountType%\``,
 
 📣 Contact Support: https://t.me/copperxcommunity/2183`,
 
-        KYC_NOT_AUTHENTICATED: '❌ Please login first using /login to view your KYC status',
+        KYC_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to view your KYC status',
         KYC_STATUS_TEMPLATE: `🔒 *KYC Verification Status*
 status: %status%
 type: %type%`,
@@ -103,7 +101,7 @@ To complete your KYC verification:
 
 
 Need help? Contact support: https://t.me/copperxcommunity/2183`,
-        WALLET_NOT_AUTHENTICATED: '❌ Please login first using /login to access wallet features',
+        WALLET_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to access wallet features',
         WALLET_BALANCE_TEMPLATE: `💰 *Wallet Balances*
 %balances%
 WalletId: %walletId%
@@ -111,7 +109,7 @@ Network: %network%
 Walletaddress: %walletAddress%
 Balance: %balance%
 Symbol: %symbol%`,
-        TRANSFER_NOT_AUTHENTICATED: '❌ Please login first using /login to use the transfer feature',
+        TRANSFER_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to use the transfer feature',
 
         TRANSFER_EMAIL_INTRO: `📤 *Send Funds by Email*
 

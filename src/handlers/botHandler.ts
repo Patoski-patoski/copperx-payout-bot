@@ -12,6 +12,7 @@ import { BankWithdrawalHandler } from './bankWithdrawalHandler';
 import { BulkTransferHandler } from './bulkTransferHandler';
 import { BOT_MESSAGES } from '../utils/messageTemplates';
 import { TransferType } from '@/types/copperx';
+import { keyboard } from '../utils/copperxUtils';
 
 export class BotHandler {
     private readonly bot: TelegramBot;
@@ -61,8 +62,8 @@ export class BotHandler {
     private setupCommands() {
         const commands = [
             { command: /\/start/, handler: this.handleStart.bind(this) },
+            { command: /\/help/, handler: this.handleHelp.bind(this) },
             { command: /\/login/, handler: this.authHandler.handleLogin.bind(this.authHandler) },
-            { command: /\/help/, handler: this.authHandler.handleLogin.bind(this.authHandler) },
             { command: /\/logout/, handler: this.authHandler.handleLogout.bind(this.authHandler) },
             { command: /\/profile/, handler: this.profileHandler.handleProfile.bind(this.profileHandler) },
             { command: /\/kyc/, handler: this.profileHandler.handleKyc.bind(this.profileHandler) },
@@ -86,7 +87,7 @@ export class BotHandler {
 
     private async handleStart(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
-        
+
         const keyboard = [
             [{ text: 'Login', callback_data: 'login' },
              { text: 'Exit', callback_data: 'exit' }
@@ -96,6 +97,21 @@ export class BotHandler {
             chatId,
             BOT_MESSAGES.WELCOME,
             { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } }
+        );
+    }
+
+    private async handleHelp(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+        const keyboard = [
+            [{ text: 'Login', callback_data: 'login' },
+            ]
+        ]
+        await this.bot.sendMessage(chatId,
+            BOT_MESSAGES.COMMANDS_MESSAGE,
+            {
+                parse_mode: 'Markdown',
+                reply_markup: { inline_keyboard: keyboard }
+            }
         );
     }
 
@@ -250,6 +266,72 @@ export class BotHandler {
 
                 if (callbackQuery.data === 'exit') {
                     await this.authHandler.handleExit(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'help'
+                    || callbackQuery.data === 'commands'
+                    || callbackQuery.data === 'back')
+                {
+
+                    await this.bot.sendMessage(chatId, BOT_MESSAGES.COMMANDS_MESSAGE, {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: keyboard
+                        }
+                    });
+                    return;
+                }
+
+                if (callbackQuery.data === 'history') {
+                    await this.historyHandler.handleHistory(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'profile'
+                    || callbackQuery.data === 'refresh_profile') {
+                    await this.profileHandler.handleProfile(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'kyc') {
+                    await this.profileHandler.handleKyc(callbackQuery.message);
+                    return;
+                }
+
+
+                if (callbackQuery.data === 'balance') {
+                    await this.walletHandler.handleBalance(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'wallets') {
+                    await this.walletHandler.handleWallets(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'default') {
+                    await this.walletHandler.handleDefault(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'send') {
+                    await this.transferHandler.handleSend(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'bulk') {
+                    await this.bulkTransferHandler.handleBulkTransfer(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'add_recipient') {
+                    await this.bulkTransferHandler.handleAddRecipient(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'review') {
+                    await this.bulkTransferHandler.handleReview(callbackQuery.message);
                     return;
                 }
 

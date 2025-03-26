@@ -24,28 +24,24 @@ export class ProfileHandler extends BaseHandler {
             const profileMessage = this.BOT_MESSAGES.PROFILE_TEMPLATE
                 .replace('%id%', profile.id || 'N/A')
                 .replace('%email%', profile.email || 'Not provided')
-                .replace('%status%', this.formatStatus(profile.status))
-                .replace('%firstName%', profile.firstName || 'Not provided')
-                .replace('%lastName%', profile.lastName || 'Not provided')
-                .replace('%profileImage%', profile.profileImage || 'Not provided')
-                .replace('%organizationId%', profile.organizationId || 'Not assigned')
-                .replace('%role%', profile.role || 'Not assigned')
-                .replace('%type%', profile.type || 'Not provided')
+                .replace('%status%', this.formatStatus(profile.status).toUpperCase())
+                .replace('%role%', profile.role.toUpperCase() || 'Not assigned')
                 .replace('%relayerAddress%', profile.relayerAddress || 'Not assigned')
-                .replace('%flags%', profile.flags?.join(', ') || 'None')
                 .replace('%walletAddress%', profile.walletAddress || 'Not set')
-                .replace('%walletId%', profile.walletId || 'Not set')
-                .replace('%walletAccountType%', profile.walletAccountType || 'Not set');
+                .replace('%walletAccountType%', profile.walletAccountType.toUpperCase() || 'Not set');
 
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
             await this.bot.sendMessage(chatId, profileMessage, {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [
-                        [{
-                            text: '🔄 Refresh Profile',
-                            callback_data: 'refresh_profile'
-                        }]
+                        [
+                            { text: '🔄 Refresh Profile', callback_data: 'refresh_profile' },
+                            { text: '🔒 KYC', callback_data: 'kyc' },
+                        ],
+                        [
+                            { text: '🔒 Back', callback_data: 'commands' },
+                        ]
                     ]
                 }
             });
@@ -129,6 +125,11 @@ export class ProfileHandler extends BaseHandler {
                 parse_mode: 'Markdown',
             });
 
+            await this.bot.sendMessage(
+                chatId,
+                '⚠️ Your access is currently limited.' +
+                'Complete KYC verification to unlock all features.'
+            );
 
             // Handle non-approved status
             if (!isApproved) {
@@ -147,17 +148,14 @@ export class ProfileHandler extends BaseHandler {
                                 [{
                                     text: '🔄 Check KYC Status Again',
                                     callback_data: 'check_kyc_status'
-                                }]
+                                }],
+                                [{ text: '🔒 Back', callback_data: 'help' }]
                             ]
                         }
                     }
                 );
 
-                await this.bot.sendMessage(
-                    chatId,
-                    '⚠️ Your access is currently limited.' +
-                    'Complete KYC verification to unlock all features.'
-                );
+               
                 return;
             } else {
                 // Handle approved status
