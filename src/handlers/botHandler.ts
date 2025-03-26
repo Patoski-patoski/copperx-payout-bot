@@ -78,8 +78,6 @@ export class BotHandler {
             { command: /\/review/, handler: this.bulkTransferHandler.handleReview.bind(this.bulkTransferHandler) }
         ];
 
-        // Generic Message Listener
-        this.bot.on('message', this.handleMessage.bind(this));
 
         commands.forEach(({ command, handler }) => {
             this.bot.onText(command, handler);
@@ -88,10 +86,16 @@ export class BotHandler {
 
     private async handleStart(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
+        
+        const keyboard = [
+            [{ text: 'Login', callback_data: 'login' },
+             { text: 'Exit', callback_data: 'exit' }
+            ]
+        ]
         await this.bot.sendMessage(
             chatId,
             BOT_MESSAGES.WELCOME,
-            { parse_mode: 'Markdown' }
+            { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } }
         );
     }
 
@@ -234,7 +238,20 @@ export class BotHandler {
                     return;
                 }
 
-               
+                if (callbackQuery.data === 'start') {
+                    await this.handleStart(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'login') {
+                    await this.authHandler.handleLogin(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'exit') {
+                    await this.authHandler.handleExit(callbackQuery.message);
+                    return;
+                }
 
                 // Original refresh_history handler
                 if (data === 'refresh_history') {

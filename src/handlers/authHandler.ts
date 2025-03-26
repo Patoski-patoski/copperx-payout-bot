@@ -17,7 +17,15 @@ export class AuthHandler extends BaseHandler {
             return;
         }
 
-        await this.bot.sendMessage(chatId, this.BOT_MESSAGES.ENTER_EMAIL);
+        const keyboard = [[{ text: 'Back', callback_data: 'start' }]]
+        
+        await this.bot.sendMessage(
+            chatId,
+            this.BOT_MESSAGES.ENTER_EMAIL, {
+                parse_mode: 'Markdown',
+                reply_markup: { inline_keyboard: keyboard }
+            }
+        );
         // Set user state to waiting for email
         this.sessions.setState(chatId, 'WAITING_EMAIL');
     }
@@ -37,6 +45,20 @@ export class AuthHandler extends BaseHandler {
             chatId,
             this.BOT_MESSAGES.LOGOUT_SUCCESS
         );
+    }
+
+    async handleExit(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+        if (!this.sessions.isAuthenticated(chatId)) {
+            await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.NOT_LOGGED_IN
+            );
+            return;
+        }
+        this.sessions.clearSession(chatId);
+        await this.bot.deleteMessage(chatId, msg.message_id);
+        await this.bot.sendMessage(chatId, this.BOT_MESSAGES.EXIT);
     }
 
     // Handle email input
@@ -82,6 +104,11 @@ export class AuthHandler extends BaseHandler {
             this.updateSessionAfterLogin(chatId, authResponse);
             await this.bot.sendMessage(chatId,
                 this.BOT_MESSAGES.LOGIN_SUCCESS
+            );
+
+            await this.bot.sendMessage(chatId,
+                this.BOT_MESSAGES.HELP_MESSAGE,
+                { parse_mode: 'Markdown' }
             );
 
         } catch (error: any) {

@@ -4,21 +4,27 @@ export const BOT_MESSAGES = {
 
 A Telegram bot for managing Copperx Payout wallets, transfers, and account services.
 
-## 🚀 Features
+🚀 *Features*
 
-- **User Authentication**: Secure login with email OTP verification
-- **Wallet Management**: View wallets across multiple networks, set default wallet
-- **Balance Tracking**: Check balances for all assets across wallets
-- **Fund Transfers**: Send funds to email addresses with various purpose codes
-- **Transaction History**: View recent transaction history
-- **KYC Verification**: Check KYC status and complete verification process
-- **Profile Management**: View and manage your Copperx account details
+- ✅ *User Authentication*: Secure login with email OTP verification
 
-🏁 Get Started:
+- 👛 *Wallet Management*: View wallets across multiple networks, set default wallet
+
+- 💰 *Balance Tracking*: Check balances for all assets across wallets
+
+- 💸 *Fund Transfers*: Send funds to email addresses with various purpose codes
+
+- 📄 *Transaction History*: View recent transaction history
+
+- 🔒 *KYC Verification*: Check KYC status and complete verification process
+
+- 📝 *Profile Management*: View and manage your Copperx account details
+
+🏁 *Get Started*:
 1. Use /login to connect your account
 2. Check /help for all commands
 
-🔐 Security Note:
+🔐 *Security Note*:
 • Never share your OTP
 • Always verify transaction details
 • Logout when done using /logout
@@ -27,7 +33,7 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
 
         ALREADY_LOGGED_IN: '🔐 You are already logged in!\n\nUse /logout to logout from your Copperx account.',
         NOT_LOGGED_IN: 'You are not logged in. Please use /login to login.',
-        ENTER_EMAIL: '📧 Please enter your Copperx email address:',
+        ENTER_EMAIL: '📧 To Login, please enter your Copperx email address:',
         INVALID_EMAIL: '❌ Invalid email address. Please enter a valid email.',
         ENTER_OTP: '✉️ We\'ve sent an OTP to your email.\n\nPlease enter the 6-digit code:',
         INVALID_OTP: '❌ Invalid OTP. Please enter a valid 6-digit code.',
@@ -52,6 +58,7 @@ walletAccountType: \`%walletAccountType%\``,
         LOGOUT_SUCCESS: '👋 Logged out successfully!\n\nUse /login to login again.',
         LOGIN_SUCCESS: `✅ Login Successful
 🎉 Welcome to Copperx Payout Bot!`,
+        EXIT: `👋 Thank you for using Copperx Payout Bot!. Goodbye and have a great day!`,
         HELP_MESSAGE: `
 
 🚀 *Quick Start Guide:*
