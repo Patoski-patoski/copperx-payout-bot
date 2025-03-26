@@ -31,7 +31,6 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 | /kyc | Check KYC status |
 | /help | Get commands and info |
 
-
 ## 🛠️ Technical Architecture
 
 The bot is built with Node.js and TypeScript with a modular architecture:
