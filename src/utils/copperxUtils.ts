@@ -33,3 +33,25 @@ export const keyboard = [
         { text: '🚪 Exit', callback_data: 'exit' }
     ]
 ]
+
+export const networkEmoji = {
+    'Ethereum': '⧫',
+    'Polygon': '⬡',
+    'Arbitrum': '🔵',
+    'Base': '🟢',
+    'Test Network': '🔧'
+}
+
+export const networkNames: { [key: string]: string } = {
+    '1': 'Ethereum',
+    '137': 'Polygon',
+    '42161': 'Arbitrum',
+    '8453': 'Base',
+    '23434': 'Test Network'
+};
+
+export const symbolEmojis: { [key: string]: string } = {
+    'USDC': '💵',
+    'ETH': '⧫',
+    'MATIC': '⬡',
+};

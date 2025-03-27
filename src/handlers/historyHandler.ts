@@ -1,6 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
-import { convertFromBaseUnit } from '../utils/copperxUtils';
 
 export class HistoryHandler extends BaseHandler {
     // Default page size
@@ -12,7 +11,18 @@ export class HistoryHandler extends BaseHandler {
         if (!this.sessions.isAuthenticated(chatId)) {
             await this.bot.sendMessage(
                 chatId,
-                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED
+                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '💰 Send funds', callback_data: 'send' },
+                                { text: '🔙 Back', callback_data: 'commands' }
+                            ]
+                        ]
+                    }
+                }
             );
             return;
         }
@@ -30,24 +40,36 @@ export class HistoryHandler extends BaseHandler {
 
             if (!transactions.data || transactions.data.length === 0) {
                 await this.bot.sendMessage(chatId,
-                    '📪 No transactions found.\n\n' +
-                    'Please make a transaction to see your history.');
+                    this.BOT_MESSAGES.HISTORY_NO_TRANSACTIONS,
+                    {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '💰 Send funds', callback_data: 'send' },
+                                    { text: '🔙 Back', callback_data: 'commands' }
+                                ]
+                            ]
+                        }
+                    });
                 return;
             }
 
             // Format the transactions for display
             const formattedTransactions = transactions.data.map((tx: any, index: number) => {
-                const date = new Date(tx.createdAt).toLocaleString();
+                const date = new Date(tx.updatedAt).toLocaleString();
                 const amount = new Intl.NumberFormat('en-US', {
                     style: 'currency',
                     currency: tx.currency || 'USDC'
                 }).format(Number(tx.amount));
 
                 return `${index + 1}. ${tx.type || 'Transfer'} - ${tx.status}\n` +
+                    `   ⏭ Type: ${tx.type}\n` +
                     `   💰 Amount: ${amount}\n` +
+                    `   💰 Recipient bank: ${tx.sourceAccount.bankName}\n` +
+                    `   💰 Recipient account: ${tx.sourceAccount.bankAccountNumber}\n` +
                     `   📅 Date: ${date}\n` +
                     `   🆔 ID: ${tx.id}\n` +
-                    (tx.recipientEmail ? `   📧 To: ${tx.recipientEmail}\n` : '') +
                     (tx.note ? `   📝 Note: ${tx.note}\n` : '') +
                     '───────────────';
             }).join('\n');
@@ -58,14 +80,12 @@ export class HistoryHandler extends BaseHandler {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {
-                                text: '🔄 Refresh',
-                                callback_data: 'refresh_history'
-                            },
-                            {
-                                text: '📄 View More',
-                                callback_data: 'history_page_2'
-                            }
+                            { text: '🔄 Refresh', callback_data: 'refresh_history'},
+                            { text: '📄 View More', callback_data: 'history_page_2'},
+                        ],
+                        [
+                            { text: '💰 Send funds', callback_data: 'send' },
+                            { text: '🔙 Back', callback_data: 'commands' }
                         ]
                     ]
                 }

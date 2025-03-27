@@ -9,7 +9,18 @@ export class ProfileHandler extends BaseHandler {
         if (!this.sessions.isAuthenticated(chatId)) {
             await this.bot.sendMessage(
                 chatId,
-                this.BOT_MESSAGES.PROFILE_NOT_AUTHENTICATED
+                this.BOT_MESSAGES.PROFILE_NOT_AUTHENTICATED,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '🔒 Login', callback_data: 'login' },
+                                { text: '🔙 Back', callback_data: 'commands' }
+                            ]
+                        ]
+                    }
+                }
             );
             return;
         }
@@ -154,8 +165,6 @@ export class ProfileHandler extends BaseHandler {
                         }
                     }
                 );
-
-               
                 return;
             } else {
                 // Handle approved status

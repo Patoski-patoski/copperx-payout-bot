@@ -88,7 +88,6 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
 
 📣 Contact Support: https://t.me/copperxcommunity/2183`,
 
-        KYC_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to view your KYC status',
         KYC_STATUS_TEMPLATE: `🔒 *KYC Verification Status*
 status: %status%
 type: %type%`,
@@ -101,7 +100,6 @@ To complete your KYC verification:
 
 
 Need help? Contact support: https://t.me/copperxcommunity/2183`,
-        WALLET_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to access wallet features',
         WALLET_BALANCE_TEMPLATE: `💰 *Wallet Balances*
 %balances%
 WalletId: %walletId%
@@ -110,6 +108,12 @@ Walletaddress: %walletAddress%
 Balance: %balance%
 Symbol: %symbol%`,
         TRANSFER_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to use the transfer feature',
+        HISTORY_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to view your transaction history',
+        HISTORY_NO_TRANSACTIONS: '📪 No transactions found.\n\n Send some funds to see your history.',
+        WALLET_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to access wallet features',
+        KYC_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to view your KYC status',
+
+
 
         TRANSFER_EMAIL_INTRO: `📤 *Send Funds by Email*
 
@@ -146,10 +150,9 @@ Please confirm this transfer.`,
 
 *Transaction ID:* %id%
 *Status:* %status%
-*Amount:* %amount% %currency%
-*Recipient:* %recipient%
-*Recipient Email:* %recipient_email%
-The recipient will be notified via email.`,
+*Amount:* %amount%
+*Currency:* %currency%
+*Recipient wallet:* %destinationAccount.walletAddress%`,
 
         TRANSFER_ERROR: 'Transfer failed: %message%',
 };

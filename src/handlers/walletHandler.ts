@@ -1,6 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import { CopperxWallet } from '@/types/copperx';
+import { networkEmoji, networkNames, symbolEmojis } from '../utils/copperxUtils';
 
 export class WalletHandler extends BaseHandler {
     async handleWallets(msg: TelegramBot.Message) {
@@ -9,7 +10,7 @@ export class WalletHandler extends BaseHandler {
         if (!this.sessions.isAuthenticated(chatId)) {
             await this.bot.sendMessage(
                 chatId,
-                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED
+                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED,
             );
             return;
         }
@@ -32,34 +33,20 @@ export class WalletHandler extends BaseHandler {
                 );
             }
 
-            // Map network IDs to readable names
-            const networkNames: { [key: string]: string } = {
-                '1': 'Ethereum',
-                '137': 'Polygon',
-                '42161': 'Arbitrum',
-                '8453': 'Base',
-                '23434': 'Test Network'
-            };
+            // Map network IDs to readable name
+            // const walletList = wallets.map((wallet: CopperxWallet, index: number) => {
+            //     const networkName = networkNames[wallet.network]
+            //         || `Network ${wallet.network}`;
+                
+            //     const defaultStatus = `*${wallet.isDefault ? '✅ Default  Wallet\n\n' : ''}*`;
 
-            const walletList = wallets.map((wallet: CopperxWallet, index: number) => {
-                const networkName = networkNames[wallet.network]
-                    || `Network ${wallet.network}`;
-                const networkEmoji = {
-                    'Ethereum': '⧫',
-                    'Polygon': '⬡',
-                    'Arbitrum': '🔵',
-                    'Base': '🟢',
-                    'Test Network': '🔧'
-                }[networkName] || '🌐';
+            //     return `${defaultStatus}\n\n` +
+            //         `${networkEmoji} ${networkName}\n\n` +
+            //         `💰 *Wallet ID: ${wallet.id}\n\n` +
+            //         `💼 Type: \`${wallet.walletType}\`\n\n` +
+            //         `📝 Address: \`${wallet.walletAddress}\``;
 
-                const defaultStatus = wallet.isDefault ? '✅ Default' : '';
-                return `*Wallet #${index + 1}* ${defaultStatus}\n` +
-                    `💰 *Wallet ID: ${wallet.id}\n` +
-                    `${networkEmoji} ${networkName}\n` +
-                    `💼 Type: \`${wallet.walletType}\`\n` +
-                    `📝 Address: \`${wallet.walletAddress}\``;
-
-            }).join('\n\n───────────────\n\n');
+            // }).join('\n\n───────────────\n\n');
 
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 
@@ -72,19 +59,12 @@ export class WalletHandler extends BaseHandler {
             for (const wallet of wallets) {
                 const networkName = networkNames[wallet.network]
                     || `Network ${wallet.network}`;
-                const networkEmoji = {
-                    'Ethereum': '⧫',
-                    'Polygon': '⬡',
-                    'Arbitrum': '🔵',
-                    'Base': '🟢',
-                    'Test Network': '🔧'
-                }[networkName] || '🌐';
-
-                const defaultStatus = wallet.isDefault ? '✅ Default' : '';
-                const walletMessage = `*Wallet*: ${defaultStatus}\n` +
-                    `${networkEmoji} Network: \`${networkName}\`\n` +
-                    `💼 Type: \`${wallet.walletType}\`\n` +
-                    `📝 Address: \`${wallet.walletAddress}\``;
+                
+                const defaultStatus = `*${wallet.isDefault ? '✅ Default  Wallet\n\n' : ''}*`;
+                const walletMessage = `${defaultStatus}` +
+                    `${networkEmoji} ${networkName}\n\n` +
+                    `📝 *Address*: \`${wallet.walletAddress}\`\n\n` +
+                    `💼 *Type*: \`${wallet.walletType}\``;
 
                 // Create different button based on default status
                 const buttonText = wallet.isDefault ?
@@ -108,17 +88,14 @@ export class WalletHandler extends BaseHandler {
 
             // Add action buttons at the end
             await this.bot.sendMessage(chatId,
-                'Wallet loaded successfully!', {
+                '', {
                 reply_markup: {
                     inline_keyboard: [
-                        [{
-                            text: '🔄 Refresh Wallets',
-                            callback_data: 'refresh_wallets'
-                        }],
-                        [{
-                            text: '💰 View Balances',
-                            callback_data: 'view_balances'
-                        }]
+                        [
+                            { text: '🔄 Refresh Wallets', callback_data: 'refresh_wallets' },
+                            { text: '💰 View Balances', callback_data: 'view_balances' },
+                        ],
+                        [{ text: '🔒 Back', callback_data: 'commands' }]
                     ]
                 }
             });
@@ -159,14 +136,7 @@ export class WalletHandler extends BaseHandler {
                 return;
             }
 
-            // Map network IDs to readable names
-            const networkNames: { [key: string]: string } = {
-                '1': 'Ethereum',
-                '137': 'Polygon',
-                '42161': 'Arbitrum',
-                '8453': 'Base',
-                '23434': 'Test Network'
-            };
+           
 
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 
@@ -178,23 +148,6 @@ export class WalletHandler extends BaseHandler {
             for (const wallet of balances) {
                 const networkName = networkNames[wallet.network]
                     || `Network ${wallet.network}`;
-
-                // Map symbols to emojis
-                const symbolEmojis: { [key: string]: string } = {
-                    'USDC': '💵',
-                    'ETH': '⧫',
-                    'MATIC': '⬡',
-                    'USDT': '💲',
-                    'DAI': '🔶'
-                };
-
-                const networkEmoji = {
-                    'Ethereum': '⧫',
-                    'Polygon': '⬡',
-                    'Arbitrum': '🔵',
-                    'Base': '🟢',
-                    'Test Network': '🔧'
-                }[networkName] || '🌐';
 
                 // Format wallet address for display
                 const walletAddress = wallet.balances[0]?.address || '';
