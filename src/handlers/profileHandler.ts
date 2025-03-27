@@ -2,6 +2,7 @@
 
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
+import { offlineKeyBoardAndBack } from '../utils/copperxUtils';
 
 export class ProfileHandler extends BaseHandler {
     async handleProfile(msg: TelegramBot.Message) {
@@ -73,7 +74,11 @@ export class ProfileHandler extends BaseHandler {
         if (!this.sessions.isAuthenticated(chatId)) {
             await this.bot.sendMessage(
                 chatId,
-                this.BOT_MESSAGES.KYC_NOT_AUTHENTICATED
+                this.BOT_MESSAGES.KYC_NOT_AUTHENTICATED,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
+                }
             );
             return;
         }
@@ -160,7 +165,7 @@ export class ProfileHandler extends BaseHandler {
                                     text: '🔄 Check KYC Status Again',
                                     callback_data: 'check_kyc_status'
                                 }],
-                                [{ text: '🔒 Back', callback_data: 'help' }]
+                                [{ text: '🔙 Back', callback_data: 'commands' }]
                             ]
                         }
                     }

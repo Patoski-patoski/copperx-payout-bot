@@ -55,3 +55,25 @@ export const symbolEmojis: { [key: string]: string } = {
     'ETH': '⧫',
     'MATIC': '⬡',
 };
+
+export const offlineKeyBoardAndBack = (text: string, callback: string) => {
+    return {
+        inline_keyboard: [
+            [
+                { text: text, callback_data: callback },
+                { text: '🔙 Back', callback_data: 'commands' }
+            ]
+        ]
+    }
+}
+
+export const offlineKeyBoardAndSend = (text: string, callback: string) => {
+    return {
+        inline_keyboard: [
+            [
+                { text: text, callback_data: callback },
+                { text: '🔙 Back', callback_data: 'commands' }
+            ]
+        ]
+    }
+}

@@ -1,10 +1,11 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
+import {
+    offlineKeyBoardAndBack,
+    offlineKeyBoardAndSend
+} from '../utils/copperxUtils';
 
 export class HistoryHandler extends BaseHandler {
-    // Default page size
-    private readonly DEFAULT_PAGE_SIZE = 5;
-
     async handleHistory(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
 
@@ -14,14 +15,7 @@ export class HistoryHandler extends BaseHandler {
                 this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED,
                 {
                     parse_mode: 'Markdown',
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                { text: '💰 Login', callback_data: 'login' },
-                                { text: '🔙 Back', callback_data: 'commands' }
-                            ]
-                        ]
-                    }
+                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
                 }
             );
             return;
@@ -43,14 +37,7 @@ export class HistoryHandler extends BaseHandler {
                     this.BOT_MESSAGES.HISTORY_NO_TRANSACTIONS,
                     {
                         parse_mode: 'Markdown',
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: '💰 Send funds', callback_data: 'send' },
-                                    { text: '🔙 Back', callback_data: 'commands' }
-                                ]
-                            ]
-                        }
+                        reply_markup: offlineKeyBoardAndSend('💰 Send funds', 'send')
                     });
                 return;
             }
