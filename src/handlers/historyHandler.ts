@@ -17,7 +17,7 @@ export class HistoryHandler extends BaseHandler {
                     reply_markup: {
                         inline_keyboard: [
                             [
-                                { text: '💰 Send funds', callback_data: 'send' },
+                                { text: '💰 Login', callback_data: 'login' },
                                 { text: '🔙 Back', callback_data: 'commands' }
                             ]
                         ]
