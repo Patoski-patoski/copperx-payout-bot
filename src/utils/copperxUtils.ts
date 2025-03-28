@@ -1,5 +1,7 @@
 // src/utils/copperxUtils.ts
 
+import TelegramBot from "node-telegram-bot-api";
+
 export function convertToBaseUnit(amount: number, decimals: number = 8)
     : string {
     return (amount * Math.pow(10, decimals)).toString();
@@ -34,14 +36,16 @@ export const keyboard = [
     ]
 ]
 
-export const networkEmoji = {
+// Emoji Mapping for Networks
+export const networkEmoji: { [key: string]: string } = {
     'Ethereum': '⧫',
     'Polygon': '⬡',
     'Arbitrum': '🔵',
     'Base': '🟢',
     'Test Network': '🔧'
-}
+};
 
+// Network Names Mapping
 export const networkNames: { [key: string]: string } = {
     '1': 'Ethereum',
     '137': 'Polygon',
@@ -49,6 +53,16 @@ export const networkNames: { [key: string]: string } = {
     '8453': 'Base',
     '23434': 'Test Network'
 };
+
+// Utility Function to Get Emoji or Name
+export function getNetworkEmoji(network: string): string {
+    return networkEmoji[network] || '🌐';
+}
+
+export function getNetworkName(networkId: string): string {
+    return networkNames[networkId] || 'Unknown Network';
+}
+
 
 export const symbolEmojis: { [key: string]: string } = {
     'USDC': '💵',
@@ -67,13 +81,23 @@ export const offlineKeyBoardAndBack = (text: string, callback: string) => {
     }
 }
 
-export const offlineKeyBoardAndSend = (text: string, callback: string) => {
+export const offlineKeyBoardAndSend = () => {
     return {
         inline_keyboard: [
             [
-                { text: text, callback_data: callback },
+                { text: '💰 Send funds', callback_data: 'send' },
                 { text: '🔙 Back', callback_data: 'commands' }
             ]
         ]
     }
+}
+
+export const clearErrorMessage = (bot: TelegramBot,
+    chatId: number,
+    messageId: number,
+    time: number = 15000) => {
+    
+    setTimeout(async () => {
+        await bot.deleteMessage(chatId, messageId);
+    }, time);
 }

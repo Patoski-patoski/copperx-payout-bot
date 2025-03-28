@@ -32,7 +32,7 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 Need support? Visit https://t.me/copperxcommunity/2183`,
 
         ALREADY_LOGGED_IN: '🔐 You are already logged in!\n\nUse /logout to logout from your Copperx account.',
-        NOT_LOGGED_IN: 'You are not logged in. Please use /login to login.',
+        NOT_LOGGED_IN: 'You are offline. Please use /login to login.',
         ENTER_EMAIL: '📧 To Login, please enter your Copperx email address:',
         INVALID_EMAIL: '❌ Invalid email address. Please enter a valid email.',
         ENTER_OTP: '✉️ We\'ve sent an OTP to your email.\n\nPlease enter the 6-digit code:',
@@ -112,6 +112,7 @@ Symbol: %symbol%`,
         HISTORY_NO_TRANSACTIONS: '📪 No transactions found.\n\n Send some funds to see your history.',
         WALLET_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to access wallet features',
         KYC_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to view your KYC status',
+        ADD_RECIPIENT_NOT_AUTHENTICATED: '❌ You\'re offline. Please login first using /login to add a recipient',
 
 
 

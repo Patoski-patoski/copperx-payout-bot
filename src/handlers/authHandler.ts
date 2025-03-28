@@ -3,7 +3,11 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import { CopperxAuthResponse } from '@/types/copperx';
-import { keyboard } from '../utils/copperxUtils';
+import {
+    keyboard,
+    offlineKeyBoardAndBack,
+    clearErrorMessage
+} from '../utils/copperxUtils';
 
 export class AuthHandler extends BaseHandler {
     async handleLogin(msg: TelegramBot.Message) {
@@ -11,10 +15,15 @@ export class AuthHandler extends BaseHandler {
 
         // Check if user is already logged in
         if (this.sessions.isAuthenticated(chatId)) {
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
-                this.BOT_MESSAGES.ALREADY_LOGGED_IN
+                this.BOT_MESSAGES.ALREADY_LOGGED_IN,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: offlineKeyBoardAndBack('📤 Logout', 'logout')
+                }
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id, 5000);
             return;
         }
 
@@ -35,10 +44,15 @@ export class AuthHandler extends BaseHandler {
         const { chat: { id: chatId } } = msg;
 
         if (!this.sessions.isAuthenticated(chatId)) {
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
-                this.BOT_MESSAGES.NOT_LOGGED_IN
+                this.BOT_MESSAGES.NOT_LOGGED_IN,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
+                }
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
             return;
         }
         this.sessions.clearSession(chatId);
@@ -51,10 +65,11 @@ export class AuthHandler extends BaseHandler {
     async handleExit(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
         if (!this.sessions.isAuthenticated(chatId)) {
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
                 this.BOT_MESSAGES.NOT_LOGGED_IN
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
             return;
         }
         this.sessions.clearSession(chatId);
@@ -65,28 +80,42 @@ export class AuthHandler extends BaseHandler {
     // Handle email input
     async handleEmailInput(chatId: number, email: string) {
         if (!email.match(this.EMAIL_REGEX)) {
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
                 this.BOT_MESSAGES.INVALID_EMAIL
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id, 5000);
             return;
         }
         try {
-            const response = await this.api.requestEmailOtp(email);
-
+            const response = await this.api.requestEmailOtp(email); 
             this.sessions.setEmail(chatId, email);
             this.sessions.setState(chatId, 'WAITING_OTP');
             this.sessions.setSid(chatId, response.sid);
 
-            await this.bot.sendMessage(chatId, this.BOT_MESSAGES.ENTER_OTP);
+            const otpMessage = await this.bot.sendMessage(
+                chatId,
+                `✉️ We\'ve sent an OTP to your email.\n\nPlease enter the 6-digit code:`,
+                {parse_mode: "Markdown"}
+            );
+            // Wait 30 seconds before showing "Send OTP again" button
+            setTimeout(async () => {
+                await this.bot.sendMessage(
+                    chatId,
+                    "Didn't receive OTP??",
+                    { reply_markup: offlineKeyBoardAndBack("↪ Send OTP again", "sendotp"),}
+                );
+            }, 30000);
+            clearErrorMessage(this.bot, chatId, otpMessage.message_id);
+            return;
 
         } catch (error: any) {
             console.error('Error in handleEmailInput:', error);
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
-                `OOps: ${error.message
-                || 'Failed to send OTP. Please try again later.'}`
+                `OOps.. Failed to send OTP. Please try again later.`
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
             this.sessions.setState(chatId, 'WAITING_EMAIL');
         }
     }
@@ -116,10 +145,11 @@ export class AuthHandler extends BaseHandler {
 
         } catch (error: any) {
             console.error('OTP verification error:', error);
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
-                `Opps: ${error.message || 'Failed to verify OTP. Please try again.'}`
+                `Opps.. Failed to verify OTP. Please input OTP again.`
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
         }
     }
 
@@ -143,5 +173,4 @@ export class AuthHandler extends BaseHandler {
         this.sessions.setOrganizationId(chatId, authResponse.user.organizationId);
         this.sessions.setUserId(chatId, authResponse.user.id);
     }
-
 } 

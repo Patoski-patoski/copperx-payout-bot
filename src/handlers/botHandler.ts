@@ -12,7 +12,7 @@ import { BankWithdrawalHandler } from './bankWithdrawalHandler';
 import { BulkTransferHandler } from './bulkTransferHandler';
 import { BOT_MESSAGES } from '../utils/messageTemplates';
 import { TransferType } from '@/types/copperx';
-import { keyboard } from '../utils/copperxUtils';
+import { clearErrorMessage, keyboard } from '../utils/copperxUtils';
 
 export class BotHandler {
     private readonly bot: TelegramBot;
@@ -315,7 +315,9 @@ export class BotHandler {
                     return;
                 }
 
-                if (callbackQuery.data === 'send') {
+                if (callbackQuery.data === 'send'
+                    || callbackQuery.data === 'send_funds') {
+                    
                     await this.transferHandler.handleSend(callbackQuery.message);
                     return;
                 }
@@ -406,6 +408,12 @@ export class BotHandler {
                     return;
                 }
 
+                if (callbackQuery.data === 'change_default_wallet') {
+                    await this.bot.answerCallbackQuery(callbackQuery.id);
+                    await this.walletHandler.handleWallets(callbackQuery.message);
+                    return;
+                }
+
                 // Handle set_default callback
                 if (callbackQuery.data?.startsWith('set_default:')) {
                     const walletId = callbackQuery.data.replace('set_default:', '');
@@ -455,8 +463,11 @@ export class BotHandler {
                             message_id: messageId
                         });
 
-                        await this.bot.sendMessage(chatId,
-                            `❌ Error: ${error.message || 'Failed to set default wallet'}`);
+                        const errorMessage = await this.bot.sendMessage(
+                            chatId,
+                            `Opps... Failed to set default Wallet`);
+                        
+                        clearErrorMessage(this.bot, chatId, errorMessage.message_id)
                     }
                     return;
                 }
@@ -484,6 +495,39 @@ export class BotHandler {
                     const type = data.replace('transfer_type_', '') as TransferType;
                     await this.transferHandler.handleTransferTypeSelection(chatId, type);
                 }
+
+                if (callbackQuery.data === 'sendotp') {
+                    const email = this.sessions.getEmail(chatId); // Retrieve email from session
+
+                    if (!email) {
+                        await this.bot.sendMessage(
+                            chatId,
+                            "⚠️ No email found. Please enter your email again."
+                        );
+                        this.sessions.setState(chatId, 'WAITING_EMAIL'); // Prompt user to re-enter email
+                        return;
+                    }
+
+                    setTimeout(async () => {
+                        await this.bot.sendMessage(chatId, '🔄 Requesting new OTP...');
+                    }, 35000);
+
+                    try {
+                        await this.api.requestEmailOtp(email);
+                        await this.bot.sendMessage(
+                            chatId,
+                            `✅ OTP sent again to *${email}*`,
+                            { parse_mode: "Markdown" }
+                        );
+                    } catch (error) {
+                        console.error("Error resending OTP:", error);
+                        await this.bot.sendMessage(
+                            chatId,
+                            "⚠️ Failed to resend OTP. Please try again later."
+                        );
+                    }
+                }
+
 
 
                 // Handle other callback queries...

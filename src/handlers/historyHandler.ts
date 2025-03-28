@@ -37,7 +37,7 @@ export class HistoryHandler extends BaseHandler {
                     this.BOT_MESSAGES.HISTORY_NO_TRANSACTIONS,
                     {
                         parse_mode: 'Markdown',
-                        reply_markup: offlineKeyBoardAndSend('💰 Send funds', 'send')
+                        reply_markup: offlineKeyBoardAndSend()
                     });
                 return;
             }

@@ -1,113 +1,135 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import { CopperxWallet } from '@/types/copperx';
-import { networkEmoji, networkNames, symbolEmojis } from '../utils/copperxUtils';
+import {
+    networkEmoji,
+    networkNames,
+    symbolEmojis,
+    offlineKeyBoardAndBack,
+    clearErrorMessage,
+    getNetworkEmoji,
+    getNetworkName
+} from '../utils/copperxUtils';
+import { logger } from '../utils/logger';
 
 export class WalletHandler extends BaseHandler {
     async handleWallets(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
 
         if (!this.sessions.isAuthenticated(chatId)) {
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
                 this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
+                }
             );
+            setTimeout(async () => {
+                await this.bot.deleteMessage(chatId, errorMessage.message_id);
+            }, 15000);
             return;
         }
 
         try {
             const loadingMessage = await this.bot.sendMessage(
                 chatId,
-                ' 🔄 Fetching your wallets...'
+                '🔄 Fetching your wallets...'
             );
+
             let wallets: CopperxWallet[] = [];
+
             try {
                 wallets = await this.api.getWallets();
             } catch (error: any) {
-                console.error('Error in fetching wallets:', error);
+                console.error('Error fetching wallets:', error);
                 await this.bot.deleteMessage(chatId, loadingMessage.message_id);
-                await this.bot.sendMessage(
+                const errorMessage = await this.bot.sendMessage(
                     chatId,
-                    `Error: ${error.message
-                    || 'Failed to fetch wallets. Please try again later.'}`
+                    `⚠️ OOps.. Failed to fetch wallets. Please try again later.`
                 );
+                clearErrorMessage(this.bot, chatId, errorMessage.message_id);
+                return; // Exit early if fetching wallets fails
             }
-
-            // Map network IDs to readable name
-            // const walletList = wallets.map((wallet: CopperxWallet, index: number) => {
-            //     const networkName = networkNames[wallet.network]
-            //         || `Network ${wallet.network}`;
-                
-            //     const defaultStatus = `*${wallet.isDefault ? '✅ Default  Wallet\n\n' : ''}*`;
-
-            //     return `${defaultStatus}\n\n` +
-            //         `${networkEmoji} ${networkName}\n\n` +
-            //         `💰 *Wallet ID: ${wallet.id}\n\n` +
-            //         `💼 Type: \`${wallet.walletType}\`\n\n` +
-            //         `📝 Address: \`${wallet.walletAddress}\``;
-
-            // }).join('\n\n───────────────\n\n');
 
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 
-            // Send a header message
-            await this.bot.sendMessage(chatId,
-                '👛 *Your Wallets*',
-                { parse_mode: 'Markdown' });
+            // Check if wallets exist
+            if (!wallets || wallets.length === 0) {
+                await this.bot.sendMessage(
+                    chatId,
+                    `⚠️ *You have no wallets yet.*\n\nCreate one or try again later.`,
+                    { parse_mode: 'Markdown' }
+                );
+            } else {
+                // Send a header message
+                await this.bot.sendMessage(
+                    chatId,
+                    '👛 *Your Wallets: *',
+                    { parse_mode: 'Markdown' }
+                );
 
-            // Send each wallet as a separate message with its own action button
-            for (const wallet of wallets) {
-                const networkName = networkNames[wallet.network]
-                    || `Network ${wallet.network}`;
-                
-                const defaultStatus = `*${wallet.isDefault ? '✅ Default  Wallet\n\n' : ''}*`;
-                const walletMessage = `${defaultStatus}` +
-                    `${networkEmoji} ${networkName}\n\n` +
-                    `📝 *Address*: \`${wallet.walletAddress}\`\n\n` +
-                    `💼 *Type*: \`${wallet.walletType}\``;
+                // Process each wallet
+                for (const wallet of wallets) {
+                    try {
+                        const networkName = getNetworkName(wallet.network)
+                            || `Network ${wallet.network}`;
+                        
+                        const networkEmoji = getNetworkEmoji(networkName);
 
-                // Create different button based on default status
-                const buttonText = wallet.isDefault ?
-                    '✓ Default Wallet' :
-                    '⭐ Set Wallet as Default';
+                        const defaultStatus = wallet.isDefault ? '✅ Default Wallet\n\n' : '';
+                        const walletMessage = `*${defaultStatus}*` +
+                            `${networkEmoji} ${networkName}\n\n` +
+                            `*📝Wallet Address*:\n\`\`\`\n${wallet.walletAddress}\n\`\`\`\n\n` +
 
-                const buttonCallbackData = wallet.isDefault ?
-                    'already_default' :
-                    `set_default:${wallet.id}`;
+                            `💼 *Type*: \`${wallet.walletType}\``;
 
-                await this.bot.sendMessage(chatId, walletMessage, {
-                    parse_mode: 'Markdown',
+                        // Create different button based on default status
+                        const buttonText = wallet.isDefault ?
+                            '✓ Your Default Wallet' :'⭐ Set Wallet as Default';
+                        const buttonCallbackData = wallet.isDefault ?
+                            'already_default' : `set_default:${wallet.id}`;
+
+                        await this.bot.sendMessage(chatId, walletMessage, {
+                            parse_mode: 'Markdown',
+                            reply_markup: {
+                                inline_keyboard: [[{
+                                    text: buttonText,
+                                    callback_data: buttonCallbackData
+                                }]]
+                            }
+                        });
+                    } catch (error: any) {
+                        console.error(`Error sending wallet ${wallet.id}:`, error);
+                        await this.bot.sendMessage(chatId, `⚠️ Failed to load wallet ${wallet.id}.`);
+                    }
+                }
+                // Add action buttons at the end
+                await this.bot.sendMessage(chatId, '.', {
                     reply_markup: {
-                        inline_keyboard: [[{
-                            text: buttonText,
-                            callback_data: buttonCallbackData
-                        }]]
+                        inline_keyboard: [
+                            [
+                                { text: '💸 Send Funds', callback_data: 'send_funds' },
+                                { text: '💰 View Balances', callback_data: 'view_balances' },
+                            ],
+                            [
+                                { text: '🤖 Commands', callback_data: 'commands' },
+                            ]
+                        ]
                     }
                 });
             }
 
-            // Add action buttons at the end
-            await this.bot.sendMessage(chatId,
-                '', {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: '🔄 Refresh Wallets', callback_data: 'refresh_wallets' },
-                            { text: '💰 View Balances', callback_data: 'view_balances' },
-                        ],
-                        [{ text: '🔒 Back', callback_data: 'commands' }]
-                    ]
-                }
-            });
-
         } catch (error: any) {
-            console.error('Error in fetching wallets:', error);
-            await this.bot.sendMessage(
+            console.error('Unexpected error in handleWallets:', error);
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
-                `Opps: Failed to fetch wallets. Please try again`
+                `⚠️ Oops.. Something went wrong. Please try again.`
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id, 5000);
         }
     }
+
 
 
     // Handle balance command
@@ -116,9 +138,14 @@ export class WalletHandler extends BaseHandler {
 
         // Check if user is authenticated
         if (!this.sessions.isAuthenticated(chatId)) {
-            await this.bot.sendMessage(chatId,
-                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED
+            const errorMessage = await this.bot.sendMessage(chatId,
+                this.BOT_MESSAGES.WALLET_NOT_AUTHENTICATED,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
+                }
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id, 5000);
             return;
         }
         try {
@@ -126,18 +153,6 @@ export class WalletHandler extends BaseHandler {
                 '🔄 Fetching balances...');
 
             const balances = await this.api.getWalletBalances()
-
-            if (!balances || balances.length === 0) {
-
-                await this.bot.editMessageText('No balances found for your wallets.', {
-                    chat_id: chatId,
-                    message_id: loadingMessage.message_id
-                });
-                return;
-            }
-
-           
-
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 
             // Send a header message
@@ -146,8 +161,9 @@ export class WalletHandler extends BaseHandler {
             });
 
             for (const wallet of balances) {
-                const networkName = networkNames[wallet.network]
-                    || `Network ${wallet.network}`;
+
+                const networkName = getNetworkName(wallet.network);
+                const networkEmoji = getNetworkEmoji(networkName);
 
                 // Format wallet address for display
                 const walletAddress = wallet.balances[0]?.address || '';
@@ -157,73 +173,78 @@ export class WalletHandler extends BaseHandler {
                     return `${emoji} *${b.symbol}*: ${b.balance}`;
                 }).join('\n');
 
+                logger.info(balanceItems)
+                
+
                 const walletMessage =
-                    `🆔 *ID*: \`${wallet.walletId}\`\n` +
-                    `${networkEmoji} *Network*: \`${networkName}\`\n` +
-                    `📝 *Address*: \`${walletAddress}\`\n\n` +
+                    `* Wallet ID*: \`${wallet.walletId}\`\n\n` +
+                    `*Network*: ${networkEmoji} \`${networkName}\`\n\n` +
+                    `*Wallet Address*:\n\`\`\`\n${walletAddress}\n\`\`\`\n\n` +
                     `*Balances*\n${balanceItems || '(No tokens found)'}`;
 
                 await this.bot.sendMessage(chatId, walletMessage, {
                     parse_mode: 'Markdown',
-                    reply_markup: {
-                        inline_keyboard: [[{
-                            text: '🔄 Refresh Balances',
-                            callback_data: 'refresh_balance'
-                        }]]
-                    }
                 });
             }
 
-            await this.bot.sendMessage(chatId, '🔄 Balances refreshed successfully!', {
+            await this.bot.sendMessage(chatId, '.', {
                 parse_mode: 'Markdown',
                 reply_markup: {
-                    inline_keyboard: [[{
-                        text: '🔄 Refresh Balances',
-                        callback_data: 'refresh_balance'
-                    }]]
+                    inline_keyboard: [[
+                        { text: '🔄 Refresh Balances', callback_data: 'refresh_balance'},
+                        { text: '💸 Send funds', callback_data: 'send_funds'}
+                    ],
+                        [ { text: '❓ Help ', callback_data: 'back' }]
+                    ]
                 }
             });
         } catch (error: any) {
             console.error('Error fetching balances:', error);
-            await this.bot.sendMessage(
-                chatId, `OOps: Failed to fetch balances. Please try again.`);
+            const errorMessage = await this.bot.sendMessage(
+                chatId,
+                `OOps.. Failed to fetch balances. Please try again.`);
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id)
         }
-
     }
 
     async handleDefault(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
+        // Check if user is authenticated
+        if (!this.sessions.isAuthenticated(chatId)) {
+            const errorMessage = await this.bot.sendMessage(chatId,
+                this.BOT_MESSAGES.NOT_LOGGED_IN,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
+                }
+            );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id, 5000);
+            return;
+        }
         const defaultWallet = await this.api.getDefaultWallet();
-        const networkEmoji = {
-            'Ethereum': '⧫',
-            'Polygon': '⬡',
-            'Arbitrum': '🔵',
-            'Base': '🟢',
-            'Test Network': '🔧'
-        }[defaultWallet.network] || '🌐';
+        // Get Emoji and Network Name
+        const networkName = getNetworkName(defaultWallet.network);
+        const networkEmoji = getNetworkEmoji(networkName);
 
-        const networkNames = {
-            '1': 'Ethereum',
-            '137': 'Polygon',
-            '42161': 'Arbitrum',
-            '8453': 'Base',
-            '23434': 'Test Network'
-        }[defaultWallet.network] || 'Unknown Network';
+        const defaultWalletMessage = `*Default Wallet:*\n\n` +
+            `*Wallet ID*: ${defaultWallet.id}\n\n` +
+            `*Network*: ${networkEmoji} \`${networkName}\`\n\n` +
+            `*Wallet Address*:\n\`\`\`\n${defaultWallet.walletAddress}\n\`\`\`\n` +
+            `*Wallet Type*: ${defaultWallet.walletType}\n`;
 
-        const defaultWalletMessage = `* 👛 Default Wallet*\n` +
-            `*Wallet ID*: ${defaultWallet.id}\n` +
-            `${networkEmoji} *Network*: ${networkNames}\n` +
-            `*Wallet Type*: ${defaultWallet.walletType}\n` +
-            `*Wallet Address*: ${defaultWallet.walletAddress}\n`;
         await this.bot.sendMessage(chatId, defaultWalletMessage, {
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
-                    [{
-                        text: 'Change Default Wallet',
-                        callback_data: 'change_default_wallet'
-                    }]
-                ]
+                    [
+                        { text:'Change Default Wallet', callback_data: 'change_default_wallet' },
+                        { text:'View Balance', callback_data: 'view_balance' }
+                    ],
+                    [
+                        { text: '🤖 Commands', callback_data: 'help' }
+                    ]
+                ],
+
             }
         });
     }
