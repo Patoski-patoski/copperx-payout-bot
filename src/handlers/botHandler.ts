@@ -89,8 +89,9 @@ export class BotHandler {
         const { chat: { id: chatId } } = msg;
 
         const keyboard = [
-            [{ text: 'Login', callback_data: 'login' },
-             { text: 'Exit', callback_data: 'exit' }
+            [
+                { text: 'Login', callback_data: 'login' },
+                { text: 'Exit', callback_data: 'exit' }
             ]
         ]
         await this.bot.sendMessage(
@@ -110,7 +111,7 @@ export class BotHandler {
             BOT_MESSAGES.COMMANDS_MESSAGE,
             {
                 parse_mode: 'Markdown',
-                reply_markup: { inline_keyboard: keyboard }
+                reply_markup: { inline_keyboard: keyboard } 
             }
         );
     }
@@ -127,6 +128,7 @@ export class BotHandler {
             default:
                 await this.bot.sendMessage(chatId,
                     "I didn't understand that. Press /help to see available commands.");
+                break;
         }
     }
 
@@ -307,6 +309,11 @@ export class BotHandler {
 
                 if (callbackQuery.data === 'wallets') {
                     await this.walletHandler.handleWallets(callbackQuery.message);
+                    return;
+                }
+
+                if (callbackQuery.data === 'withdraw') {
+                    await this.bankWithdrawalHandler.handleWithdraw(callbackQuery.message);
                     return;
                 }
 

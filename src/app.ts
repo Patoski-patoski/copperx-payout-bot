@@ -42,7 +42,7 @@ class App {
         const bot = this.bot.getBot();
 
         bot.on('polling_error', (error) => {
-            console.error('Polling error:', error);
+            console.error('Polling error:', error.message);
             this.restartBot();
         });
 

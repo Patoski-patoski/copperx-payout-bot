@@ -12,6 +12,8 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 
 - 💰 *Balance Tracking*: Check balances for all assets across wallets
 
+- 🏧 *Withdraw*: Withdraw offramp transactions
+
 - 💸 *Fund Transfers*: Send funds to email addresses with various purpose codes
 
 - 📄 *Transaction History*: View recent transaction history
@@ -61,8 +63,9 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
 
 🚀 *Quick Start Guide:*
 
-1️⃣ Use /login to connect your account.  
-2️⃣ Check /help for all available commands.  
+1️⃣ Use /login to connect your account.
+2️⃣ Use /logout — Logout of your account
+3️⃣ Check /help for all available commands.  
 
 🛠️ *Available Commands:*
 
@@ -84,7 +87,6 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
 - 🏷️ /kyc — Check KYC status
 - 📜 /history — View transaction history
 - ❓ /help — Show help message
-- 🚪 /logout — Logout of your account
 
 
 

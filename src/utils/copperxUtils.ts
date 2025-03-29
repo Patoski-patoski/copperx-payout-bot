@@ -20,6 +20,7 @@ export const keyboard = [
     [
         { text: '✈️ Send Funds', callback_data: 'send' },
         { text: '📦 Bulk Transfer', callback_data: 'bulk' },
+        { text: '🏧 Offramp Transfer', callback_data: 'withdraw' },
     ],
     [
         { text: '➕ Add Recipient', callback_data: 'add_recipient' },
