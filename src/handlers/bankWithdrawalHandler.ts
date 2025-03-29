@@ -36,7 +36,7 @@ export class BankWithdrawalHandler extends BaseHandler {
                         reply_markup: {
                             inline_keyboard: [[{
                                 text: '🏦 Set Up Bank Account',
-                                url: 'https://payout.copperx.io/app/settings/bank-accounts'
+                                url: 'https://payout.copperx.io/app/'
                             }]]
                         }
                     }

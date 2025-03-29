@@ -223,13 +223,23 @@ export class BulkTransferHandler extends BaseHandler {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            { text: '💸 Payment', callback_data: 'bulk_purpose_payment' },
-                            { text: '🎁 Gift', callback_data: 'bulk_purpose_gift' }
+                            { text: '👤 Self', callback_data: 'bulk_purpose_self' },
+                            { text: '🎁 Gift', callback_data: 'bulk_purpose_gift' },
+                            { text: '💰 Salary', callback_data: 'bulk_purpose_salary' },
                         ],
                         [
-                            { text: '💼 Business', callback_data: 'bulk_purpose_business' },
-                            { text: '👨‍👩‍👧‍👦 Family', callback_data: 'bulk_purpose_family' }
-                        ]
+                            { text: '👨‍👩‍👧‍👦 Family', callback_data: 'bulk_purpose_family' },
+                            { text: '💰 Saving', callback_data: 'bulk_purpose_saving' },
+                            { text: '💰 Income', callback_data: 'bulk_purpose_income' },
+                        ],
+                        [
+                            { text: '💸 reimbursement', callback_data: 'bulk_purpose_reimbursement' },
+                            { text: '🏠 Home Improvement', callback_data: 'bulk_purpose_home_improvement' },
+                        ],
+                        [
+                            { text: '🎓 Education Support', callback_data: 'bulk_purpose_education_support' },
+                            { text: '❌ Cancel', callback_data: 'bulk_cancel' }
+                        ],
                     ]
                 }
             }

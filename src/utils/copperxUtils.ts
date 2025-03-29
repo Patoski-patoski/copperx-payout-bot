@@ -37,6 +37,23 @@ export const keyboard = [
     ]
 ]
 
+// Helper method to get display text for purpose code
+export function getPurposeDisplayText(purposeCode: string): string {
+    const purposeMap = {
+        'self': '👤 Self',
+        'salary': '💰 Salary',
+        'gift': '🎁 Gift',
+        'income': '💰 Income',
+        'saving': '💰 Saving',
+        'education_support': '🎓 Education Support',
+        'family': '👨‍👩‍👧‍👦 Family',
+        'home_improvement': '🏠 Home Improvement',
+        'reimbursement': '💸 Reimbursement',
+    };
+
+    return purposeMap[purposeCode as keyof typeof purposeMap] || purposeCode;
+}
+
 // Emoji Mapping for Networks
 export const networkEmoji: { [key: string]: string } = {
     'Ethereum': '⧫',
