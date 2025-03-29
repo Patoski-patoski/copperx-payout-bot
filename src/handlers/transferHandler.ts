@@ -7,6 +7,13 @@ import {
     EmailTransferRequest,
     WalletWithdrawalRequest
 } from '@/types/copperx';
+import {
+    clearErrorMessage,
+    convertFromBaseUnit,
+    convertToBaseUnit,
+    offlineKeyBoardAndBack
+ } from '../utils/copperxUtils';
+import { logger } from '../utils/logger';
 
 
 export class TransferHandler extends BaseHandler {
@@ -30,6 +37,9 @@ export class TransferHandler extends BaseHandler {
                         [
                             { text: '📧 Send to Email', callback_data: 'transfer_type_email' },
                             { text: '💼 Send to Wallet', callback_data: 'transfer_type_wallet' }
+                        ],
+                        [
+                            { text: '🔙 Back', callback_data: 'help' }
                         ]
                     ]
                 }
@@ -41,6 +51,8 @@ export class TransferHandler extends BaseHandler {
     // Add this method to handle transfer type selection
     async handleTransferTypeSelection(chatId: number, type: TransferType) {
         this.sessions.setTransferType(chatId, type);
+        console.log("handleTransferTypeSelection", type);
+        
 
         if (type === 'email') {
             await this.bot.sendMessage(
@@ -53,25 +65,29 @@ export class TransferHandler extends BaseHandler {
                 this.BOT_MESSAGES.TRANSFER_ENTER_EMAIL
             );
             this.sessions.setState(chatId, 'WAITING_TRANSFER_EMAIL');
-        } else {
+        } else if (type === 'wallet') {
             await this.bot.sendMessage(
                 chatId,
                 '📤 *Send to Wallet*\n\nPlease enter the recipient\'s wallet address:',
                 { parse_mode: 'Markdown' }
             );
             this.sessions.setState(chatId, 'WAITING_TRANSFER_WALLET');
+        } else {
+            console.error(`Invalid transfer type selected: ${type}`)
         }
         this.sessions.clearTransferData(chatId);
-    }
+    } 
 
     // Handle email input for transfer
     async handleTransferEmail(chatId: number, email: string) {
         // Validate email
         if (!email.match(this.EMAIL_REGEX)) {
-            await this.bot.sendMessage(
+            const invalidEmail = await this.bot.sendMessage(
                 chatId,
                 this.BOT_MESSAGES.TRANSFER_INVALID_EMAIL
             );
+
+            clearErrorMessage(this.bot, chatId, invalidEmail.message_id);
             return;
         }
         // Store email in session
@@ -112,8 +128,6 @@ export class TransferHandler extends BaseHandler {
         this.sessions.setState(chatId, 'WAITING_TRANSFER_AMOUNT');
     }
 
-  
-
     // Handle amount input for transfer
     async handleTransferAmount(chatId: number, amountText: string) {
         // Validate amount
@@ -128,7 +142,7 @@ export class TransferHandler extends BaseHandler {
 
         try {
             // Convert amount to base unit
-            const baseAmount = this.convertToBaseUnit(parseFloat(amount));
+            const baseAmount = convertToBaseUnit(parseFloat(amount));
 
             // Store amount in session
             this.sessions.setTransferAmount(chatId, baseAmount);
@@ -202,9 +216,13 @@ export class TransferHandler extends BaseHandler {
         try {
 
             const transferData = this.sessions.getTransferData(chatId);
+            console.log("transferData", transferData);
+            
 
             // Get purpose display text
-            const purposeDisplay = this.getPurposeDisplayText(transferData.purposeCode);
+            const purposeDisplay = this.getPurposeDisplayText(transferData);
+            console.log("purposeDisplay", purposeDisplay);
+            
 
             // Format note if exists
             const noteDisplay = transferData.note ?
@@ -212,9 +230,10 @@ export class TransferHandler extends BaseHandler {
             
             // Create confirmation message
             const confirmMessage = this.BOT_MESSAGES.TRANSFER_CONFIRM_TEMPLATE
-                .replace('%amount%', this.convertFromBaseUnit(Number(transferData.amount)).toString())
+                .replace('%amount%', convertFromBaseUnit(Number(transferData.amount)).toString())
                 .replace('%currency%', transferData.currency)
-                .replace('%purpose%', purposeDisplay)
+                .replace('%email%', transferData.email || transferData.walletAddress) 
+                .replace('%purposeCode%', transferData.purposeCode) 
                 .replace('%note%', noteDisplay);
 
             // Send confirmation message with buttons
@@ -241,7 +260,6 @@ export class TransferHandler extends BaseHandler {
             );
         }
     }
-
 
     // Process the transfer
     async processTransfer(chatId: number) {
@@ -300,7 +318,11 @@ export class TransferHandler extends BaseHandler {
                     chatId,
                     this.BOT_MESSAGES.TRANSFER_ERROR.replace(
                         '%message%', response.error
-                    )
+                    ),
+                    {
+                        parse_mode: "Markdown",
+                        reply_markup: offlineKeyBoardAndBack('💸 Send funds', 'send')
+                    }
                 );
                 return;
             }          
@@ -329,16 +351,6 @@ export class TransferHandler extends BaseHandler {
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
     }
 
-    private convertToBaseUnit(amount: number, decimals: number = 8)
-        : string {
-        return (amount * Math.pow(10, decimals)).toString();
-    }
-
-    private convertFromBaseUnit(amount: number, decimals: number = 8)
-        : number {
-        return Number(amount) / Math.pow(10, decimals);
-    }
-
     // Helper method to get display text for purpose code
     getPurposeDisplayText(purposeCode: string): string {
         const purposeMap = {
@@ -361,7 +373,7 @@ export class TransferHandler extends BaseHandler {
         const transferType = this.sessions.getTransferType(chatId);
 
         // Convert base unit amount back to display format
-        const amount = this.convertFromBaseUnit(transferData?.amount || '0');
+        const amount = convertFromBaseUnit(transferData?.amount || '0');
         const formattedAmount = new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: transferData?.currency || 'USDC'

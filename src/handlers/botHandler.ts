@@ -493,6 +493,8 @@ export class BotHandler {
 
                 if (data.startsWith('transfer_type_')) {
                     const type = data.replace('transfer_type_', '') as TransferType;
+                    console.log("Type: ", type);
+                    
                     await this.transferHandler.handleTransferTypeSelection(chatId, type);
                 }
 

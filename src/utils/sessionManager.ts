@@ -64,6 +64,8 @@ export class SessionManager {
         const session = this.sessions.get(chatId) || { chatId, state };
         session.state = state;
         this.sessions.set(chatId, session);
+        console.log("Set state", session);
+
     }
 
     // get the state of the session
@@ -149,6 +151,8 @@ export class SessionManager {
             }
             session.transferData.type = type;
             this.sessions.set(chatId, session);
+            console.log("setTransferType", session);
+            
         }
     }
     clearTransferState(chatId: number): void {
@@ -179,6 +183,7 @@ export class SessionManager {
             session.transferData = {};
             this.sessions.set(chatId, session);
         }
+        console.log("Clear Transfer Data", session);
     }
 
     setTransferEmail(chatId: number, email: string): void {

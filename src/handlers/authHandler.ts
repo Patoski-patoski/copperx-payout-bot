@@ -98,14 +98,14 @@ export class AuthHandler extends BaseHandler {
                 `✉️ We\'ve sent an OTP to your email.\n\nPlease enter the 6-digit code:`,
                 {parse_mode: "Markdown"}
             );
-            // Wait 30 seconds before showing "Send OTP again" button
-            setTimeout(async () => {
-                await this.bot.sendMessage(
-                    chatId,
-                    "Didn't receive OTP??",
-                    { reply_markup: offlineKeyBoardAndBack("↪ Send OTP again", "sendotp"),}
-                );
-            }, 30000);
+            // // Wait 30 seconds before showing "Send OTP again" button
+            // setTimeout(async () => {
+            //     await this.bot.sendMessage(
+            //         chatId,
+            //         "Didn't receive OTP??",
+            //         { reply_markup: offlineKeyBoardAndBack("↪ Send OTP again", "sendotp"),}
+            //     );
+            // }, 50000);
             clearErrorMessage(this.bot, chatId, otpMessage.message_id);
             return;
 

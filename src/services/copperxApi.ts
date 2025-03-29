@@ -24,7 +24,7 @@ import {
 
 export class CopperxApiService {
   private api: AxiosInstance;
-  private token: string | null = null;
+  private token: string | null = null;  
   private readonly MAX_RETRIES = 3;
   private readonly RATE_LIMIT = 30;
   private readonly TIME_WINDOW = 60 * 1000; // 1 minute
