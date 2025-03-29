@@ -292,9 +292,6 @@ export class SessionManager {
         const bankAccountId = this.sessions.get(chatId)?.withdrawalData?.preferredBankAccountId;
         if (!bankAccountId) return undefined;
         
-        // Find and return the bank account info based on the ID
-        // This assumes you have a method to retrieve the full BankAccountInfo object
-        // You might need to adjust this implementation based on your actual data structure
         return { id: bankAccountId } as BankAccountInfo;
     }
 
@@ -380,9 +377,23 @@ export class SessionManager {
         }
     }
 
+
+    setCurrentBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet', value: string }) {
+        if (!this.sessions.get(chatId)?.bulkTransfer) {
+            this.initBulkTransfer(chatId);
+        }
+        const session = this.sessions.get(chatId);
+        if (session) {
+            session.bulkTransfer!.currentRecipient = recipient;
+            this.sessions.set(chatId, session);
+        }
+    }
+
     getBulkTransferRequests(chatId: number): BulkTransferRequest[] {
         return this.sessions.get(chatId)?.bulkTransfer?.requests || [];
     }
+
+
 
     clearBulkTransferData(chatId: number) {
         const session = this.sessions.get(chatId);

@@ -95,25 +95,25 @@ export class AuthHandler extends BaseHandler {
             this.sessions.setState(chatId, 'WAITING_OTP');
             this.sessions.setSid(chatId, response.sid);
 
-            const otpMessage = await this.bot.sendMessage(
+            await this.bot.sendMessage(
                 chatId,
                 `✉️ We\'ve sent an OTP to your email.\n\nPlease enter the 6-digit code:`,
                 {
                     parse_mode: "Markdown",
                     reply_markup: {
                         force_reply: true,
-                    }            
+                    }
                 }
             );
             // Wait 50 seconds before showing "Send OTP again" button
             setTimeout(async () => {
-                await this.bot.sendMessage(
+            const otpMessage =  await this.bot.sendMessage(
                     chatId,
                     "Didn't receive OTP??",
-                    { reply_markup: offlineKeyBoardAndBack("↪ Send OTP again", "sendotp"),}
+                    { reply_markup: offlineKeyBoardAndBack("↪ Send OTP again", "sendotp")}
                 );
-            }, 50000);
-            clearErrorMessage(this.bot, chatId, otpMessage.message_id);
+                clearErrorMessage(this.bot, chatId, otpMessage.message_id), 5000;
+            }, 15000);
             return;
 
         } catch (error: any) {

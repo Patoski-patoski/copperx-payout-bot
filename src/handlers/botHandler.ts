@@ -151,6 +151,9 @@ export class BotHandler {
                 case 'WAITING_TRANSFER_EMAIL':
                     await this.transferHandler.handleTransferEmail(chatId, text);
                     break;
+                case 'WAITING BULK CONFIRMATION':
+                    await this.bulkTransferHandler.handleBulkConfirmation(msg);
+                    break;
                 case 'WAITING_TRANSFER_WALLET':
                     await this.transferHandler.handleTransferWallet(chatId, text);
                     break;
@@ -158,7 +161,14 @@ export class BotHandler {
                     await this.transferHandler.handleTransferAmount(chatId, text);
                     break;
                 case 'WAITING_BULK_RECIPIENT':
-                    await this.bulkTransferHandler.handleRecipientInput(chatId, text)
+                    await this.bulkTransferHandler.handleRecipientInput(chatId, text);
+                    break;
+                case 'WAITING_BULK_AMOUNT':
+                    await this.bulkTransferHandler.handleBulkAmount(chatId, text);
+                    break;
+                case 'WAITING_BULK_CONFIRMATION':
+                    await this.bulkTransferHandler.handleBulkConfirmation(msg);
+                    break;
                 case 'WAITING_TRANSFER_NOTE':
                     await this.transferHandler.handleTransferNote(chatId, text);
                     break;
@@ -238,7 +248,7 @@ export class BotHandler {
                                         text: 'Next ➡️',
                                         callback_data: `history_page_${page + 1}`
                                     } : null
-                                ].filter(Boolean) // Remove null values
+                                ].filter(Boolean) 
                             ];
 
                             await this.bot.sendMessage(chatId,
