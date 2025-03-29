@@ -13,7 +13,6 @@ import {
     convertToBaseUnit,
     offlineKeyBoardAndBack
  } from '../utils/copperxUtils';
-import { logger } from '../utils/logger';
 
 
 export class TransferHandler extends BaseHandler {
@@ -58,7 +57,7 @@ export class TransferHandler extends BaseHandler {
             await this.bot.sendMessage(
                 chatId,
                 this.BOT_MESSAGES.TRANSFER_EMAIL_INTRO,
-                { parse_mode: 'Markdown' }
+                { parse_mode: 'Markdown', reply_markup: {force_reply: true} }
             );
             await this.bot.sendMessage(
                 chatId,
@@ -69,7 +68,8 @@ export class TransferHandler extends BaseHandler {
             await this.bot.sendMessage(
                 chatId,
                 '📤 *Send to Wallet*\n\nPlease enter the recipient\'s wallet address:',
-                { parse_mode: 'Markdown' }
+                { parse_mode: 'Markdown', reply_markup: {force_reply: true} }
+
             );
             this.sessions.setState(chatId, 'WAITING_TRANSFER_WALLET');
         } else {
@@ -96,7 +96,11 @@ export class TransferHandler extends BaseHandler {
         // Ask for amount
         await this.bot.sendMessage(
             chatId,
-            this.BOT_MESSAGES.TRANSFER_ENTER_AMOUNT
+            this.BOT_MESSAGES.TRANSFER_ENTER_AMOUNT,
+            {
+                parse_mode: 'Markdown',
+                reply_markup: { force_reply: true }
+            }
         );
 
         // Update session state
@@ -105,7 +109,6 @@ export class TransferHandler extends BaseHandler {
 
     // Add handler for wallet address input
     async handleTransferWallet(chatId: number, walletAddress: string) {
-        // Validate wallet address (add your validation logic)
         if (walletAddress.length !== 42
             && !walletAddress.startsWith('0x')) {
             await this.bot.sendMessage(
@@ -123,7 +126,8 @@ export class TransferHandler extends BaseHandler {
     private async requestAmount(chatId: number) {
         await this.bot.sendMessage(
             chatId,
-            this.BOT_MESSAGES.TRANSFER_ENTER_AMOUNT
+            this.BOT_MESSAGES.TRANSFER_ENTER_AMOUNT,
+            {reply_markup: {force_reply: true}}
         );
         this.sessions.setState(chatId, 'WAITING_TRANSFER_AMOUNT');
     }

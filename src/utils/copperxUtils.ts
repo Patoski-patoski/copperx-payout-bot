@@ -71,8 +71,10 @@ export const symbolEmojis: { [key: string]: string } = {
     'MATIC': '⬡',
 };
 
-export const offlineKeyBoardAndBack = (text: string, callback: string) => {
+export const offlineKeyBoardAndBack = (text: string, callback: string,
+    force_reply: boolean = false) => {
     return {
+        force_reply: force_reply,
         inline_keyboard: [
             [
                 { text: text, callback_data: callback },

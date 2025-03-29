@@ -10,7 +10,6 @@ import {
     getNetworkEmoji,
     getNetworkName
 } from '../utils/copperxUtils';
-import { logger } from '../utils/logger';
 
 export class WalletHandler extends BaseHandler {
     async handleWallets(msg: TelegramBot.Message) {
@@ -93,6 +92,7 @@ export class WalletHandler extends BaseHandler {
                         await this.bot.sendMessage(chatId, walletMessage, {
                             parse_mode: 'Markdown',
                             reply_markup: {
+                                force_reply: true,
                                 inline_keyboard: [[{
                                     text: buttonText,
                                     callback_data: buttonCallbackData
@@ -105,7 +105,7 @@ export class WalletHandler extends BaseHandler {
                     }
                 }
                 // Add action buttons at the end
-                await this.bot.sendMessage(chatId, '.', {
+                await this.bot.sendMessage(chatId, 'Options...', {
                     reply_markup: {
                         inline_keyboard: [
                             [
@@ -173,9 +173,6 @@ export class WalletHandler extends BaseHandler {
                     return `${emoji} *${b.symbol}*: ${b.balance}`;
                 }).join('\n');
 
-                logger.info(balanceItems)
-                
-
                 const walletMessage =
                     `* Wallet ID*: \`${wallet.walletId}\`\n\n` +
                     `*Network*: ${networkEmoji} \`${networkName}\`\n\n` +
@@ -190,6 +187,7 @@ export class WalletHandler extends BaseHandler {
             await this.bot.sendMessage(chatId, '.', {
                 parse_mode: 'Markdown',
                 reply_markup: {
+                    force_reply: true,
                     inline_keyboard: [[
                         { text: '🔄 Refresh Balances', callback_data: 'refresh_balance'},
                         { text: '💸 Send funds', callback_data: 'send_funds'}
@@ -235,6 +233,7 @@ export class WalletHandler extends BaseHandler {
         await this.bot.sendMessage(chatId, defaultWalletMessage, {
             parse_mode: 'Markdown',
             reply_markup: {
+                force_reply: true,
                 inline_keyboard: [
                     [
                         { text:'Change Default Wallet', callback_data: 'change_default_wallet' },

@@ -157,6 +157,8 @@ export class BotHandler {
                 case 'WAITING_TRANSFER_AMOUNT':
                     await this.transferHandler.handleTransferAmount(chatId, text);
                     break;
+                case 'WAITING_BULK_RECIPIENT':
+                    await this.bulkTransferHandler.handleRecipientInput(chatId, text)
                 case 'WAITING_TRANSFER_NOTE':
                     await this.transferHandler.handleTransferNote(chatId, text);
                     break;

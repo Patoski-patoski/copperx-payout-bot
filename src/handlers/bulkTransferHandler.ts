@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import { BulkTransferPayload, BulkTransferRequest } from '@/types/copperx';
-import { v4 as uuidv4 } from 'uuid'; // Add uuid package for requestId generation``
+import { v4 as uuidv4 } from 'uuid'; // Add uuid package for requestId generation
 import { convertToBaseUnit, convertFromBaseUnit } from '../utils/copperxUtils';
 
 export class BulkTransferHandler extends BaseHandler {
@@ -27,7 +27,9 @@ export class BulkTransferHandler extends BaseHandler {
             '- amount\n' +
             '- purpose (optional, defaults to "payment")\n' +
             '- currency (optional, defaults to "USDC")\n\n' +
+
             'Or send recipients one by one using these commands:\n' +
+            
             '/add_recipient - Add a new recipient\n' +
             '/review - Review current recipients\n' +
             '/clear - Clear all recipients\n' +
@@ -77,7 +79,6 @@ export class BulkTransferHandler extends BaseHandler {
         );
         this.sessions.setState(chatId, 'WAITING_BULK_AMOUNT');
     }
-
   
 
     async handleBulkAmount(chatId: number, text: string) {

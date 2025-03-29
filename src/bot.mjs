@@ -16,3 +16,11 @@ const networkNames = {
 
 console.log(networkEmoji);
 console.log(networkNames);
+
+const wallets = [
+  "0xF553638a865B1Cdc711fF827552e51D9065ae1B3",
+  "0x034c8eefe0f0221ecd8f6ed4b065ed54c64bad24525467eaff7a114ae5184e5f"
+
+]
+
+console.log(wallets.length);
