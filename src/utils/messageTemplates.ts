@@ -71,8 +71,10 @@ Need support? Visit https://t.me/copperxcommunity/2183`,
 - 🏦 /wallets — View all wallets
 - ⭐ /default — View default wallet
 
+
 🎯 *Transactions:*
 - ✈️ /send — Send funds
+- 🏧 /withdraw — Create Offramp transfer
 - 📦 /bulk — Bulk transfer funds
 - ➕ /add\\_recipient — Add recipient to bulk transfer
 - 🔍 /review — Review bulk transfer list
