@@ -322,29 +322,66 @@ export class SessionManager {
 
     initBulkTransfer(chatId: number) {
         if (!this.sessions.get(chatId)) {
-            this.sessions.set(chatId, { chatId } as UserSession);
+            this.sessions.set(chatId, {} as UserSession);
         }
         const session = this.sessions.get(chatId);
         if (session) {
             session.bulkTransfer = {
-                requests: []
+                requests: [],
+                currentRecipient: undefined,
+                currentAmount: undefined
             };
             this.sessions.set(chatId, session);
         }
     }
 
-    setBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet', value: string }) {
-        if (!this.sessions.get(chatId)?.bulkTransfer) {
+    setBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet'; value: string }) {
+        const session = this.sessions.get(chatId);
+        if (!session?.bulkTransfer) {
             this.initBulkTransfer(chatId);
         }
-        const session = this.sessions.get(chatId);
-        if (session) {
-            session.bulkTransfer!.currentRecipient = recipient;
-            this.sessions.set(chatId, session);
+        const updatedSession = this.sessions.get(chatId);
+        if (updatedSession?.bulkTransfer) {
+            updatedSession.bulkTransfer.currentRecipient = recipient;
+            this.sessions.set(chatId, updatedSession);
         }
+    }
+    getBulkRecipient(chatId: number) {
+        return this.sessions.get(chatId)?.bulkTransfer?.currentRecipient;
+    }
+
+    // initBulkTransfer(chatId: number) {
+    //     if (!this.sessions.get(chatId)) {
+    //         this.sessions.set(chatId, { chatId } as UserSession);
+    //     }
+    //     const session = this.sessions.get(chatId);
+    //     if (session) {
+    //         session.bulkTransfer = {
+    //             requests: []
+    //         };
+    //         this.sessions.set(chatId, session);
+    //     }
+    // }
+
+    // setBulkRecipient(chatId: number, recipient: { type: string; value: string }) {
+    //     const session = this.sessions.get(chatId);
+    //         if (!session?.bulkTransfer) {
+    //             this.initBulkTransfer(chatId);
+    //         }
+    //     const updatedSession = this.sessions.get(chatId);
+    //         if (updatedSession?.bulkTransfer) {
+    //             updatedSession.bulkTransfer.currentRecipient = recipient;
+    //             this.sessions.set(chatId, updatedSession);
+    //         }
+    // }
+
+    async setCurrentBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet'; value: string }) {
+
     }
 
     getCurrentBulkRecipient(chatId: number) {
+        const current = this.sessions.get(chatId)?.bulkTransfer?.currentRecipient;
+        console.log("Currentopp", current);
         return this.sessions.get(chatId)?.bulkTransfer?.currentRecipient;
     }
 
@@ -378,21 +415,20 @@ export class SessionManager {
     }
 
 
-    setCurrentBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet', value: string }) {
-        if (!this.sessions.get(chatId)?.bulkTransfer) {
-            this.initBulkTransfer(chatId);
-        }
-        const session = this.sessions.get(chatId);
-        if (session) {
-            session.bulkTransfer!.currentRecipient = recipient;
-            this.sessions.set(chatId, session);
-        }
-    }
+    // setCurrentBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet', value: string }) {
+    //     if (!this.sessions.get(chatId)?.bulkTransfer) {
+    //         this.initBulkTransfer(chatId);
+    //     }
+    //     const session = this.sessions.get(chatId);
+    //     if (session) {
+    //         session.bulkTransfer!.currentRecipient = recipient;
+    //         this.sessions.set(chatId, session);
+    //     }
+    // }
 
     getBulkTransferRequests(chatId: number): BulkTransferRequest[] {
         return this.sessions.get(chatId)?.bulkTransfer?.requests || [];
     }
-
 
 
     clearBulkTransferData(chatId: number) {

@@ -169,16 +169,17 @@ export interface AccountsResponse {
 }
 
 export interface BulkTransferRequest {
-    requestId: string;
+    requestId: string,
     request: {
-        walletAddress?: string;
-        email?: string;
-        payeeId?: string;
-        amount: string;
-        purposeCode: string;
-        currency: string;
-    };
+        walletAddress: string,
+        email: string,
+        amount: string,
+        payeeId: string,
+        purposeCode: string,
+        currency: string
+    }
 }
+
 
 export interface BulkTransferPayload {
     requests: BulkTransferRequest[];

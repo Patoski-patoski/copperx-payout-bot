@@ -67,6 +67,10 @@ export class BulkTransferHandler extends BaseHandler {
         }
 
         // Store recipient
+        this.sessions.setCurrentBulkRecipient(chatId, {
+            type: isEmail ? 'email' : 'wallet',
+            value: text
+        });
         this.sessions.setBulkRecipient(chatId, {
             type: isEmail ? 'email' : 'wallet',
             value: text
@@ -243,39 +247,52 @@ export class BulkTransferHandler extends BaseHandler {
                     ]
                 }
             }
-        );
+        );        
     }
 
     async handlePurposeSelection(chatId: number, purpose: string) {
+        console.log('Chat ID:', chatId);
+        console.log('Purpose:', purpose);
+
         const recipient = this.sessions.getCurrentBulkRecipient(chatId);
+        console.log('recipient:', recipient);
+        
+        
         if (!recipient) {
+            console.log('Session state:', this.sessions.getState(chatId));
             await this.bot.sendMessage(chatId, '❌ Error: Recipient data not found');
             return;
         }
 
         // Create transfer request
-        const request: BulkTransferRequest = {
-            requestId: uuidv4(),
-            request: {
-                [recipient.type === 'email' ? 'email' : 'walletAddress']: recipient.value,
-                amount: this.sessions.getBulkAmount(chatId) || '0',
-                purposeCode: purpose,
-                currency: 'USDC'
-            }
+        const request: BulkTransferPayload = {
+            requests: [{
+                requestId: uuidv4(), // Generate a unique request ID
+                request: {
+                    walletAddress: recipient.type === 'email' ? '' : recipient.value,
+                    email: recipient.type === 'email' ? recipient.value : '', 
+                    amount: this.sessions.getBulkAmount(chatId) || '0',
+                    payeeId: '',
+                    purposeCode: purpose, 
+                    currency: 'USDC'
+                }
+            }]
         };
 
         // Add to bulk transfer list
-        this.sessions.addBulkTransferRequest(chatId, request);
+        this.sessions.addBulkTransferRequest(chatId, request.requests[0]);
 
         // Show confirmation and options
         await this.bot.sendMessage(
             chatId,
-            '✅ Recipient added to bulk transfer list!\n\n' +
-            'Choose an action:\n' +
-            '/add\\_recipient - Add another recipient\n' +
-            '/review - Review current recipients\n' +
-            '/send_bulk - Process the bulk transfer',
-            { parse_mode: 'Markdown' }
+            '✅ Recipient added to bulk transfer list\\!\n\n' +
+            'Choose an action:\n\n' +
+            '/add\\_recipient \\- Add another recipient\n' +
+            '/review \\- Review current recipients\n' +
+            '/send\\_bulk \\- Process the bulk transfer',
+            {
+                parse_mode: 'MarkdownV2'
+            }
         );
 
         this.sessions.setState(chatId, 'BULK_TRANSFER_MENU');
