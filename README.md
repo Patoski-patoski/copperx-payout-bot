@@ -24,8 +24,12 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 | /profile | View user profile |
 | /wallets | List all wallets |
 | /balance | Check wallet balance |
+| /default | View default wallet |
 | /send | Initiate a transfer |
 | /withdraw | Start bank withdrawal |
+| /bulk | Start bulk transfer |
+| /add_recipient | Add the recipient for bulk transfer |
+| /review | Review recipients of the bulk transfer |
 | /bulk | Start bulk transfer |
 | /history | View transaction history |
 | /kyc | Check KYC status |
@@ -53,11 +57,12 @@ src/
 │   ├── bulkWithdrawalHandler.ts # Bulk Transfer payment
 │   ├── transferHandler.ts       # Transfer payment functionality
 │   ├── historyHandler.ts        # Transaction history
+│   ├── index.ts                 # Exports all handlers
 │   └── walletHandler.ts         # Wallet management
 ├── services/
 │   └── copperxApi.ts            # API communication service
 ├── types/
-│   └── copperx.ts               # TypeScript interfaces
+│   └── copperx.ts               # TypeScript interfaces for API
 │   └── index.ts                 # TypeScript interfaces
 ├── utils/
 │   ├── messageTemplates.ts      # Message templates
@@ -159,6 +164,7 @@ If the bot stops responding:
 2. Verify environment variables
 3. Ensure bot token is valid
 4. Check API endpoint status
+5. Check your Network connectivity
 
 ## 📝 License
 

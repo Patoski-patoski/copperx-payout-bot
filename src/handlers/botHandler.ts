@@ -13,7 +13,6 @@ import { BulkTransferHandler } from './bulkTransferHandler';
 import { BOT_MESSAGES } from '../utils/messageTemplates';
 import { TransferType } from '@/types/copperx';
 import { clearErrorMessage, keyboard } from '../utils/copperxUtils';
-import { promiseHooks } from 'v8';
 
 export class BotHandler {
     private readonly bot: TelegramBot;

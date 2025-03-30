@@ -4,6 +4,7 @@ node_modules
 .env.development
 .env.production
 file.txt
+cron.txt
 bot.mjs
 dist/
 # Dependencies
@@ -28,6 +29,5 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
-
 
 cron.txt
