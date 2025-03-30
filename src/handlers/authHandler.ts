@@ -112,7 +112,7 @@ export class AuthHandler extends BaseHandler {
                     "Didn't receive OTP??",
                     { reply_markup: offlineKeyBoardAndBack("↪ Send OTP again", "sendotp")}
                 );
-                clearErrorMessage(this.bot, chatId, otpMessage.message_id), 5000;
+                clearErrorMessage(this.bot, chatId, otpMessage.message_id, 5000);
             }, 15000);
             return;
 

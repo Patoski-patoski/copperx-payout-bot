@@ -143,6 +143,7 @@ export class SessionManager {
         return this.sessions.get(chatId)?.userId || null;
     }
 
+    // set the transfer type of the session
     setTransferType(chatId: number, type: TransferType) {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -155,6 +156,8 @@ export class SessionManager {
             
         }
     }
+
+    // clear the transfer type of the session
     clearTransferState(chatId: number): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -162,10 +165,13 @@ export class SessionManager {
             this.sessions.set(chatId, session);
         }
     }
+
+    // get the transfer type of the session
     getTransferType(chatId: number): TransferType {
         return this.sessions.get(chatId)?.transferData?.type as TransferType;
     }
 
+    // set the transfer wallet address of the session
     setTransferWallet(chatId: number, walletAddress: string) {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -177,6 +183,7 @@ export class SessionManager {
         }
     }
 
+    // clear the transfer data of the session
     clearTransferData(chatId: number): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -186,6 +193,7 @@ export class SessionManager {
         console.log("Clear Transfer Data", session);
     }
 
+    // set the transfer email of the session
     setTransferEmail(chatId: number, email: string): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -197,6 +205,7 @@ export class SessionManager {
         }
     }
 
+    // get the transfer amount of the session
     setTransferAmount(chatId: number, amount: string): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -208,6 +217,7 @@ export class SessionManager {
         }
     }
 
+    // set the transfer currency of the session
     setTransferCurrency(chatId: number, currency: string): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -219,6 +229,7 @@ export class SessionManager {
         }
     }
 
+    // set the transfer purpose of the session
     setTransferPurpose(chatId: number, purpose: string): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -230,6 +241,7 @@ export class SessionManager {
         }
     }
 
+    // set the transfer note of the session
     setTransferNote(chatId: number, note: string): void {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -241,11 +253,13 @@ export class SessionManager {
         }
     }
 
+    // get the transfer data
     getTransferData(chatId: number): any {
         const session = this.sessions.get(chatId);
         return session?.transferData || {};
     }
 
+    // set the withdrawal amount
     setWithdrawalAmount(chatId: number, amount: string): void {
         this.ensureWithdrawalData(chatId);
         const session = this.sessions.get(chatId);
@@ -255,10 +269,12 @@ export class SessionManager {
         }
     }
 
+    // get the withdrawal amount
     getWithdrawalAmount(chatId: number): string | undefined {
         return this.sessions.get(chatId)?.withdrawalData?.amount;
     }
 
+    // set the withdrawal quote
     setWithdrawalQuote(chatId: number, quote: any) {
         this.ensureWithdrawalData(chatId);
         const session = this.sessions.get(chatId);
@@ -268,10 +284,12 @@ export class SessionManager {
         }
     }
 
+    // get the withdrawal quote
     getWithdrawalQuote(chatId: number) {
         return this.sessions.get(chatId)?.withdrawalData?.quote;
     }
 
+    // clear the withdrawal data
     clearWithdrawalData(chatId: number) {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -280,6 +298,7 @@ export class SessionManager {
         }
     }
 
+    // set the withdrawal account
     setWithdrawalBankAccount(chatId: number, bankAccount: BankAccountInfo) {
         this.ensureWithdrawalData(chatId);
         const session = this.sessions.get(chatId);
@@ -288,6 +307,8 @@ export class SessionManager {
             this.sessions.set(chatId, session);
         }
     }
+
+    // get the withdrawal account
     getWithdrawalBankAccount(chatId: number): BankAccountInfo | undefined {
         const bankAccountId = this.sessions.get(chatId)?.withdrawalData?.preferredBankAccountId;
         if (!bankAccountId) return undefined;
@@ -295,7 +316,7 @@ export class SessionManager {
         return { id: bankAccountId } as BankAccountInfo;
     }
 
-
+    // set the preferred bank account by id
     setPreferredBankAccountId(chatId: number, bankAccountId: string) {
         this.ensureWithdrawalData(chatId);
         const session = this.sessions.get(chatId);
@@ -305,6 +326,7 @@ export class SessionManager {
         }
     }
 
+    // get the preferred bank account by id
     getPreferredBankAccountId(chatId: number): string | undefined {
         return this.sessions.get(chatId)?.withdrawalData?.preferredBankAccountId;
     }
@@ -350,31 +372,6 @@ export class SessionManager {
         return this.sessions.get(chatId)?.bulkTransfer?.currentRecipient;
     }
 
-    // initBulkTransfer(chatId: number) {
-    //     if (!this.sessions.get(chatId)) {
-    //         this.sessions.set(chatId, { chatId } as UserSession);
-    //     }
-    //     const session = this.sessions.get(chatId);
-    //     if (session) {
-    //         session.bulkTransfer = {
-    //             requests: []
-    //         };
-    //         this.sessions.set(chatId, session);
-    //     }
-    // }
-
-    // setBulkRecipient(chatId: number, recipient: { type: string; value: string }) {
-    //     const session = this.sessions.get(chatId);
-    //         if (!session?.bulkTransfer) {
-    //             this.initBulkTransfer(chatId);
-    //         }
-    //     const updatedSession = this.sessions.get(chatId);
-    //         if (updatedSession?.bulkTransfer) {
-    //             updatedSession.bulkTransfer.currentRecipient = recipient;
-    //             this.sessions.set(chatId, updatedSession);
-    //         }
-    // }
-
     async setCurrentBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet'; value: string }) {
 
     }
@@ -413,18 +410,6 @@ export class SessionManager {
             this.sessions.set(chatId, session);
         }
     }
-
-
-    // setCurrentBulkRecipient(chatId: number, recipient: { type: 'email' | 'wallet', value: string }) {
-    //     if (!this.sessions.get(chatId)?.bulkTransfer) {
-    //         this.initBulkTransfer(chatId);
-    //     }
-    //     const session = this.sessions.get(chatId);
-    //     if (session) {
-    //         session.bulkTransfer!.currentRecipient = recipient;
-    //         this.sessions.set(chatId, session);
-    //     }
-    // }
 
     getBulkTransferRequests(chatId: number): BulkTransferRequest[] {
         return this.sessions.get(chatId)?.bulkTransfer?.requests || [];

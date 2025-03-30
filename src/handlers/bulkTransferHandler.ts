@@ -2,7 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import { BulkTransferPayload, BulkTransferRequest } from '@/types/copperx';
 import { v4 as uuidv4 } from 'uuid'; // Add uuid package for requestId generation
-import { convertToBaseUnit, convertFromBaseUnit, clearErrorMessage } from '../utils/copperxUtils';
+import { convertToBaseUnit, convertFromBaseUnit, clearErrorMessage, offlineKeyBoardAndBack } from '../utils/copperxUtils';
 
 export class BulkTransferHandler extends BaseHandler {
     async handleBulkTransfer(msg: TelegramBot.Message) {
@@ -128,77 +128,37 @@ export class BulkTransferHandler extends BaseHandler {
         return true;
     }
 
-    async handleReview(msg: TelegramBot.Message) {
-        const { chat: { id: chatId } } = msg;
-        const requests = this.sessions.getBulkTransferRequests(chatId);
+    // // Add new method to handle confirmation response
+    // async handleBulkConfirmation(msg: TelegramBot.Message) {
+    //     const { chat: { id: chatId }, text } = msg;
+    //     const response = text?.toLowerCase();
 
-        if (!requests || requests.length === 0) {
-            const errorMessage = await this.bot.sendMessage(
-                chatId,
-                '📝 No recipients added yet.\n\nUse /add_recipient to add recipients.'
-            );
-            clearErrorMessage(this.bot, chatId, errorMessage.message_id, 20000);
-            return;
-        }
-
-        let message = '⚡️ *Confirm Bulk Transfer:*\n\n';
-        let totalAmount = 0;
-
-        requests.forEach((req, index) => {
-            const recipient = req.request.email || req.request.walletAddress;
-            const amount = convertFromBaseUnit(Number(req.request.amount) || 0);
-            totalAmount += amount;
-
-            message += `🔹 *Recipient ${index + 1}:*\n` +
-                `  - ${req.request.email ? 'Email' : 'Wallet'}: \`${recipient}\`\n` +
-                `  - Amount: ${amount} ${req.request.currency}\n` +
-                `  - Purpose: ${req.request.purposeCode}\n\n`;
-        });
-
-        message += `*Total Amount: ${totalAmount} USDC*\n\n` +
-            'Reply with:\n' +
-            '`YES` - to proceed\n' +
-            '`NO` - to cancel\n' +
-            '`cancel` - to return to transfer menu';
-
-        await this.bot.sendMessage(chatId, message, {
-            parse_mode: 'Markdown'
-        });
-
-        this.sessions.setState(chatId, 'WAITING_BULK_CONFIRMATION');
-    }
-
-    // Add new method to handle confirmation response
-    async handleBulkConfirmation(msg: TelegramBot.Message) {
-        const { chat: { id: chatId }, text } = msg;
-        const response = text?.toLowerCase();
-
-        switch (response) {
-            case 'yes':
-                await this.processBulkTransfer(chatId);
-                break;
-            case 'no':
-                await this.bot.sendMessage(
-                    chatId,
-                    '❌ Bulk transfer cancelled.'
-                );
-                this.sessions.setState(chatId, 'BULK_TRANSFER_MENU');
-                break;
-            case 'cancel':
-                await this.bot.sendMessage(
-                    chatId,
-                    '🔙 Returned to transfer menu'
-                );
-                this.sessions.setState(chatId, 'AUTHENTICATED');
-                break;
-            default:
-                await this.bot.sendMessage(
-                    chatId,
-                    '❌ Invalid response. Please reply with YES, NO, or cancel'
-                );
-                return;
-        }
-    }
+    //     switch (response) {
+    //         case 'yes':
+    //             await this.processBulkTransfer(chatId);
+    //             break;
+    //         case 'no':
+    //             await this.bot.sendMessage(
+    //                 chatId,
+    //                 '❌ Bulk transfer cancelled.',
+    //             );
+    //             this.sessions.setState(chatId, 'BULK_TRANSFER_MENU');
+    //             break;
+    //         case 'cancel':
+    //             await this.bot.sendMessage(
+    //                 chatId,
+    //                 '🔙 Returned to transfer menu'
+    //             );
+    //             this.sessions.setState(chatId, 'AUTHENTICATED');
+    //             break;
+    //         default:
+    //             await this.bot.sendMessage(
+    //                 chatId,
+    //                 '❌ Invalid response. Please reply with YES, NO, or cancel'
+    //             );
+    //             return;
+    //     }
+    // }
   
 
     async handleBulkAmount(chatId: number, text: string) {
@@ -291,53 +251,72 @@ export class BulkTransferHandler extends BaseHandler {
             '/review \\- Review current recipients\n' +
             '/send\\_bulk \\- Process the bulk transfer',
             {
-                parse_mode: 'MarkdownV2'
+                parse_mode: 'MarkdownV2',
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '➕ Add Another', callback_data: 'add_recipient' },
+                            { text: '👀 Review', callback_data: 'review' }
+                        ],
+                        [
+                            { text: '🔙 Back', callback_data: 'help' },
+                            { text: '❌ Cancel', callback_data: 'bulk_cancel' }
+                        ],
+                        [
+                            { text: '💸 Confirm and Send', callback_data: 'bulk_confirm' },
+                        ]
+                    ]
+                }
             }
         );
-
-        this.sessions.setState(chatId, 'BULK_TRANSFER_MENU');
+        this.sessions.setState(chatId, 'WAITING_BULK_TRANSFER_MENU');
     }
 
-    // async handleReview(msg: TelegramBot.Message) {
-    //     const { chat: { id: chatId } } = msg;
-    //     const requests = this.sessions.getBulkTransferRequests(chatId);
+    async handleReview(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+        const requests = this.sessions.getBulkTransferRequests(chatId);
 
-    //     if (!requests || requests.length === 0) {
-    //         await this.bot.sendMessage(
-    //             chatId,
-    //             '📝 No recipients added yet.\n\nUse /add_recipient to add recipients.'
-    //         );
-    //         return;
-    //     }
+        if (!requests || requests.length === 0) {
+            const errorMessage = await this.bot.sendMessage(
+                chatId,
+                '📝 No recipients added yet.\n\nUse /add_recipient to add recipients.'
+            );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id, 20000);
+            return;
+        }
 
-    //     let message = '📋 *Bulk Transfer Review*\n\n';
-    //     let totalAmount = 0;
+        let message = '⚡️ *Confirm Bulk Transfer:*\n\n';
+        let totalAmount = 0;
 
-    //     requests.forEach((req, index) => {
-    //         const recipient = req.request.email || req.request.walletAddress;
-    //         const amount = convertFromBaseUnit(Number(req.request.amount) || 0);
-    //         totalAmount += amount;
+        requests.forEach((req, index) => {
+            const recipient = req.request.email || req.request.walletAddress;
+            const amount = convertFromBaseUnit(Number(req.request.amount) || 0);
+            totalAmount += amount;
 
-    //         message += `${index + 1}. ${recipient}\n` +
-    //             `   Amount: ${amount} ${req.request.currency}\n` +
-    //             `   Purpose: ${req.request.purposeCode}\n\n`;
-    //     });
+            message += `🔹 *Recipient ${index + 1}:*\n` +
+                `  - ${req.request.email ? 'Email' : 'Wallet'}: \`${recipient}\`\n` +
+                `  - Amount: ${amount} ${req.request.currency}\n` +
+                `  - Purpose: ${req.request.purposeCode}\n\n`;
+        });
 
-    //     message += `\nTotal Amount: ${totalAmount} USDC\n` +
-    //         `Total Recipients: ${requests.length}`;
+        message += `*Total Amount: ${totalAmount} USDC*\n\n`
 
-    //     await this.bot.sendMessage(chatId, message, {
-    //         parse_mode: 'Markdown',
-    //         reply_markup: {
-    //             inline_keyboard: [
-    //                 [
-    //                     { text: '✅ Confirm & Send', callback_data: 'bulk_confirm' },
-    //                     { text: '❌ Cancel', callback_data: 'bulk_cancel' }
-    //                 ]
-    //             ]
-    //         }
-    //     });
-    // }
+        await this.bot.sendMessage(chatId, message, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: '💸 Confirm & Send', callback_data: 'bulk_confirm' },
+                        { text: '❌ Cancel', callback_data: 'bulk_cancel' }
+                    ],
+                    [
+                        { text: '🔙 Back', callback_data: 'help' }
+                    ]
+                ]
+           }
+        });
+    }
+ 
 
     async processBulkTransfer(chatId: number) {
         

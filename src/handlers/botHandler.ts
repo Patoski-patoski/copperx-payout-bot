@@ -13,6 +13,7 @@ import { BulkTransferHandler } from './bulkTransferHandler';
 import { BOT_MESSAGES } from '../utils/messageTemplates';
 import { TransferType } from '@/types/copperx';
 import { clearErrorMessage, keyboard } from '../utils/copperxUtils';
+import { promiseHooks } from 'v8';
 
 export class BotHandler {
     private readonly bot: TelegramBot;
@@ -151,11 +152,11 @@ export class BotHandler {
                 case 'WAITING_TRANSFER_EMAIL':
                     await this.transferHandler.handleTransferEmail(chatId, text);
                     break;
-                case 'WAITING BULK CONFIRMATION':
-                    await this.bulkTransferHandler.handleBulkConfirmation(msg);
-                    break;
                 case 'WAITING_TRANSFER_WALLET':
                     await this.transferHandler.handleTransferWallet(chatId, text);
+                    break;
+                case 'WAITING_BULK_TRANSFER_MENU':
+                    await this.bulkTransferHandler.handleBulkTransfer(msg);
                     break;
                 case 'WAITING_TRANSFER_AMOUNT':
                     await this.transferHandler.handleTransferAmount(chatId, text);
@@ -165,9 +166,6 @@ export class BotHandler {
                     break;
                 case 'WAITING_BULK_AMOUNT':
                     await this.bulkTransferHandler.handleBulkAmount(chatId, text);
-                    break;
-                case 'WAITING_BULK_CONFIRMATION':
-                    await this.bulkTransferHandler.handleBulkConfirmation(msg);
                     break;
                 case 'WAITING_TRANSFER_NOTE':
                     await this.transferHandler.handleTransferNote(chatId, text);
@@ -346,13 +344,13 @@ export class BotHandler {
                     return;
                 }
 
-                if (callbackQuery.data === 'add_recipient') {
-                    await this.bulkTransferHandler.handleAddRecipient(callbackQuery.message);
+                if (callbackQuery.data === 'review') {
+                    await this.bulkTransferHandler.handleReview(callbackQuery.message);
                     return;
                 }
 
-                if (callbackQuery.data === 'review') {
-                    await this.bulkTransferHandler.handleReview(callbackQuery.message);
+                if (callbackQuery.data === "add_recipient") { 
+                    await this.bulkTransferHandler.handleAddRecipient(callbackQuery.message);
                     return;
                 }
 
@@ -377,6 +375,7 @@ export class BotHandler {
                 if (data === 'bulk_cancel') {
                     this.sessions.clearBulkTransferData(chatId);
                     await this.bot.sendMessage(chatId, '❌ Bulk transfer cancelled');
+                    this.sessions.setState(chatId, 'AUTHENTICATED');
                     return;
                 }
 
