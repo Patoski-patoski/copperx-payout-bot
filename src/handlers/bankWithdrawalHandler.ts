@@ -1,16 +1,22 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import { OffRampQuoteRequest, BankWithdrawalRequest } from '../types/copperx';
+import {
+    clearErrorMessage,
+    convertFromBaseUnit,
+    convertToBaseUnit
+} from '../utils/copperxUtils';
 
 export class BankWithdrawalHandler extends BaseHandler {
     async handleWithdraw(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
 
         if (!this.sessions.isAuthenticated(chatId)) {
-            await this.bot.sendMessage(
+            const errorMessage = await this.bot.sendMessage(
                 chatId,
                 this.BOT_MESSAGES.TRANSFER_NOT_AUTHENTICATED
             );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
             return;
         }
 
@@ -18,11 +24,15 @@ export class BankWithdrawalHandler extends BaseHandler {
 
             // First check if user has a default wallet
             const defaultWallet = await this.api.getDefaultWallet();
+            console.log("Default wallet", defaultWallet);
+            
             if (!defaultWallet) {
-                await this.bot.sendMessage(
+                const errorMessage = await this.bot.sendMessage(
                     chatId,
-                    '❌ No default wallet found. Please set a default wallet first using /default'
+                    '❌ No default wallet found.' +
+                    'Please set a default wallet first using /default '
                 );
+                clearErrorMessage(this.bot, chatId, errorMessage.message_id);
                 return;
             }
             const defaultAccount = await this.api.getDefaultBankAccount();
@@ -75,16 +85,6 @@ export class BankWithdrawalHandler extends BaseHandler {
         this.sessions.setState(chatId, 'WAITING_WITHDRAWAL_AMOUNT');
     }
 
-    private convertToBaseUnit(amount: number, decimals: number = 8)
-        : string {
-        return (amount * Math.pow(10, decimals)).toString();
-    }
-
-    private convertFromBaseUnit(amount: number, decimals: number = 8)
-        : number {
-        return Number(amount) / Math.pow(10, decimals);
-    }
-
     async handleWithdrawalAmount(chatId: number, amountText: string) {
         const amount = amountText.trim();
         if (!/^[0-9]+(\.[0-9]+)?$/.test(amount)
@@ -98,7 +98,7 @@ export class BankWithdrawalHandler extends BaseHandler {
         }
 
         // Convert to base unit
-        const baseAmount = this.convertToBaseUnit(parseFloat(amount));
+        const baseAmount = convertToBaseUnit(parseFloat(amount));
         this.sessions.setWithdrawalAmount(chatId, baseAmount);
 
         // Get quote
@@ -159,18 +159,28 @@ export class BankWithdrawalHandler extends BaseHandler {
     private async showPurposeSelection(chatId: number) {
         await this.bot.sendMessage(
             chatId,
-            '🎯 Select the purpose of this withdrawal:',
+            '🎯 Select transfer purpose:',
             {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            { text: '👤 Self', callback_data: 'withdraw_purpose_self' },
-                            { text: '💼 Business', callback_data: 'withdraw_purpose_business' }
+                            { text: '👤 Self', callback_data: 'bulk_purpose_self' },
+                            { text: '🎁 Gift', callback_data: 'bulk_purpose_gift' },
+                            { text: '💰 Salary', callback_data: 'bulk_purpose_salary' },
                         ],
                         [
-                            { text: '💸 Payment', callback_data: 'withdraw_purpose_payment' },
-                            { text: '🎁 Gift', callback_data: 'withdraw_purpose_gift' }
-                        ]
+                            { text: '👨‍👩‍👧‍👦 Family', callback_data: 'bulk_purpose_family' },
+                            { text: '💰 Saving', callback_data: 'bulk_purpose_saving' },
+                            { text: '💰 Income', callback_data: 'bulk_purpose_income' },
+                        ],
+                        [
+                            { text: '💸 reimbursement', callback_data: 'bulk_purpose_reimbursement' },
+                            { text: '🏠 Home Improvement', callback_data: 'bulk_purpose_home_improvement' },
+                        ],
+                        [
+                            { text: '🎓 Education Support', callback_data: 'bulk_purpose_education_support' },
+                            { text: '❌ Cancel', callback_data: 'transfer_cancel' }
+                        ],
                     ]
                 }
             }
@@ -180,7 +190,6 @@ export class BankWithdrawalHandler extends BaseHandler {
     async handlePurposeSelection(chatId: number, purpose: string) {
         const quote = this.sessions.getWithdrawalQuote(chatId);
         const bankAccount = this.sessions.getWithdrawalBankAccount(chatId);
-        // const quote = withdrawalData?.quote;
         if (!quote) {
             await this.bot.sendMessage(
                 chatId,
@@ -210,7 +219,7 @@ export class BankWithdrawalHandler extends BaseHandler {
     }
 
     private async showWithdrawalSuccess(chatId: number, response: any) {
-        const amount = this.convertFromBaseUnit(Number(this.sessions.getWithdrawalAmount(chatId) || '0'));
+        const amount = convertFromBaseUnit(Number(this.sessions.getWithdrawalAmount(chatId) || '0'));
         const formattedAmount = new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USDC'
@@ -218,7 +227,12 @@ export class BankWithdrawalHandler extends BaseHandler {
 
         const message = `✅ *Bank Withdrawal Initiated!*\n\n` +
             `Amount: ${formattedAmount}\n` +
-            `Transaction ID: \`${response.transactionId}\`\n\n` +
+            `Status: ${response.status}\n` +
+            `Currency: ${response.currency}\n` +
+            `PurposeCOde: ${response.purposeCode}\n` +
+            `Currency: ${response.currency}\n` +
+            `RecipientBank: ${response.destinationAccount.bankName}\n` +
+            `Transaction ID: \`${response.id}\`\n\n` +
             `Your withdrawal is being processed. You will receive a confirmation once completed.`;
 
         await this.bot.sendMessage(chatId, message, {

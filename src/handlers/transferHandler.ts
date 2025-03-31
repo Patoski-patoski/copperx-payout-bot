@@ -50,8 +50,6 @@ export class TransferHandler extends BaseHandler {
     // Add this method to handle transfer type selection
     async handleTransferTypeSelection(chatId: number, type: TransferType) {
         this.sessions.setTransferType(chatId, type);
-        console.log("handleTransferTypeSelection", type);
-        
 
         if (type === 'email') {
             await this.bot.sendMessage(
@@ -220,13 +218,9 @@ export class TransferHandler extends BaseHandler {
         try {
 
             const transferData = this.sessions.getTransferData(chatId);
-            console.log("transferData", transferData);
-            
 
             // Get purpose display text
             const purposeDisplay = this.getPurposeDisplayText(transferData);
-            console.log("purposeDisplay", purposeDisplay);
-            
 
             // Format note if exists
             const noteDisplay = transferData.note ?
@@ -278,11 +272,6 @@ export class TransferHandler extends BaseHandler {
             const transferData = this.sessions.getTransferData(chatId);
             const transferType = this.sessions.getTransferType(chatId);
 
-            console.log('Processing transfer:', {
-                transferData,
-                transferType
-            });
-
             const baseRequest: BaseTransferRequest = {
                 amount: transferData.amount,
                 purposeCode: transferData.purposeCode,
@@ -311,8 +300,6 @@ export class TransferHandler extends BaseHandler {
                 } as EmailTransferRequest;
             }
 
-            console.log('Sending request:', request);
-
             // Send transfer request to API
             const response = await this.api.sendTransfer(request, transferType);
             await this.bot.deleteMessage(chatId, loadingMsg.message_id);
@@ -332,8 +319,6 @@ export class TransferHandler extends BaseHandler {
             }          
 
             await this.showTransferSuccess(chatId, response);
-            console.log('Transfer response: ', response);
-          
             // Clear transfer data and reset state
             this.sessions.clearTransferData(chatId);
             this.sessions.setState(chatId, 'AUTHENTICATED');

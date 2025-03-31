@@ -54,6 +54,8 @@ export function getPurposeDisplayText(purposeCode: string): string {
     return purposeMap[purposeCode as keyof typeof purposeMap] || purposeCode;
 }
 
+
+
 // Emoji Mapping for Networks
 export const networkEmoji: { [key: string]: string } = {
     'Ethereum': '⧫',

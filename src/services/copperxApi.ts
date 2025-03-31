@@ -318,6 +318,8 @@ export class CopperxApiService {
       const response = await this.getWallets();
       const defaultWallet = response.find((wallet: CopperxWallet) => wallet.isDefault);
       if (!defaultWallet) throw new Error('No default wallet found');
+      console.log("DEF WALLET", defaultWallet);
+      
       return defaultWallet;
     } catch (error: any) {
       console.error("Failed to get default wallet:", {

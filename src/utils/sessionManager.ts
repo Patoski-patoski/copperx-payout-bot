@@ -64,8 +64,6 @@ export class SessionManager {
         const session = this.sessions.get(chatId) || { chatId, state };
         session.state = state;
         this.sessions.set(chatId, session);
-        console.log("Set state", session);
-
     }
 
     // get the state of the session
@@ -152,8 +150,6 @@ export class SessionManager {
             }
             session.transferData.type = type;
             this.sessions.set(chatId, session);
-            console.log("setTransferType", session);
-            
         }
     }
 
@@ -190,7 +186,6 @@ export class SessionManager {
             session.transferData = {};
             this.sessions.set(chatId, session);
         }
-        console.log("Clear Transfer Data", session);
     }
 
     // set the transfer email of the session
@@ -378,7 +373,6 @@ export class SessionManager {
 
     getCurrentBulkRecipient(chatId: number) {
         const current = this.sessions.get(chatId)?.bulkTransfer?.currentRecipient;
-        console.log("Currentopp", current);
         return this.sessions.get(chatId)?.bulkTransfer?.currentRecipient;
     }
 

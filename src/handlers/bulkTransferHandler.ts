@@ -211,15 +211,9 @@ export class BulkTransferHandler extends BaseHandler {
     }
 
     async handlePurposeSelection(chatId: number, purpose: string) {
-        console.log('Chat ID:', chatId);
-        console.log('Purpose:', purpose);
-
         const recipient = this.sessions.getCurrentBulkRecipient(chatId);
-        console.log('recipient:', recipient);
-        
         
         if (!recipient) {
-            console.log('Session state:', this.sessions.getState(chatId));
             await this.bot.sendMessage(chatId, '❌ Error: Recipient data not found');
             return;
         }
