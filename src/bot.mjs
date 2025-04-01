@@ -1,26 +1,92 @@
-const networkEmoji = {
-    'Ethereum': '⧫',
-    'Polygon': '⬡',
-    'Arbitrum': '🔵',
-    'Base': '🟢',
-    'Test Network': '🔧'
-}['Test Network'] || '🌐';
+import TelegramBot from 'node-telegram-bot-api';
 
-const networkNames = {
-  '1': 'Ethereum',
-  '137': 'Polygon',
-  '42161': 'Arbitrum',
-  '8453': 'Base',
-  '23434': 'Test Network'
-}['137'] || 'Unknown Network';
+import dotenv from 'dotenv';
+dotenv.config();
 
-console.log(networkEmoji);
-console.log(networkNames);
 
-const wallets = [
-  "0xF553638a865B1Cdc711fF827552e51D9065ae1B3",
-  "0x034c8eefe0f0221ecd8f6ed4b065ed54c64bad24525467eaff7a114ae5184e5f"
+// Replace with your bot's token from BotFather
+// const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-]
+// // Create a bot that uses polling to fetch new updates
+// const bot = new TelegramBot(TOKEN, { polling: true });
+// bot.pa
+// // Listen for any message
+// bot.on('message', (msg) => {
+//   const chatId = msg.chat.id;
 
-console.log(wallets.length);
+//   console.log("msg", msg);
+
+//   const text = msg.text;
+
+//   if (text === '/Jesus') {
+//     bot.sendMessage(chatId, 'Welcome! Type /help to see available commands.');
+//   } else if (text === '/help') {
+//     bot.sendMessage(chatId, 'Available commands:\n/start - Start the bot\n/help - Get help info');
+//   } else if (['Jesus', 'God', 'Lord'].includes(text)) {
+//     bot.sendMessage(chatId, `God is good all the time and Christ is King!`);
+//   } else {
+//     console.log(typeof text);
+//     bot.sendMessage(chatId, `You said: ${text}`);
+//   }
+// });
+
+// bot.onText(/\/echo (.+)/, (msg, match) => {
+//   const resp = match ? match[1] : '';
+//   bot.sendMessage(msg.chat.id, resp);
+// });
+
+// console.log('Bot is running...');
+
+
+const KYC_RESPONSE = {
+  page: 1,
+  limit: 10,
+  count: 1,
+  hasMore: false,
+  data: [
+     {
+       id: '1344b767-70d0-4a88-95e4-2eaa0925490f',
+       createdAt: '2025-03-15T06:11:01.441Z',
+       updatedAt: '2025-03-16T04:19:36.431Z',
+       providerCode: '0x21',
+       kycProviderCode: 'persona',
+       organizationId: 'cc279cb4-87a2-4938-8137-3e44e93a8f76',
+       status: 'initiated',
+       type: 'individual',
+       country: 'nga',
+       kycDetailId: '9aa6c0d1-eb7b-4978-ade5-d3a0459260eb', 
+       kybDetailId: null,
+       statusUpdates: [Object],
+       kycDetail: [Object],
+       kybDetail: null,
+       kycAdditionalDocuments: []
+     }
+   ]
+ }
+ 
+console.log(KYC_RESPONSE.data[0]);
+ 
+
+const arr = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+
+if (arr.length == 0) console.log("Empty transactions");
+
+if (arr.length < 10) console.log(arr);
+
+const last10transactions = arr.slice(0, 10);
+console.log("last 10 transactions", last10transactions);
+
+if (arr.length > 10) {
+  console.log("liced", arr.slice(0, 10));
+}
+
+
+if(["jesus", "god", "lord"].includes("jesus")) {
+  console.log("jesus is in the array");
+}
+
+
+
+console.log(arr.length);
+
+ 

@@ -40,6 +40,12 @@ export class WalletHandler extends BaseHandler {
 
             try {
                 wallets = await this.api.getWallets();
+
+                // Add this: Check and fix default wallets for each network
+                const networks = new Set(wallets.map(w => w.network));
+                for (const network of networks) {
+                    await this.api.ensureSingleDefaultWallet(network);
+                }
             } catch (error: any) {
                 console.error('Error fetching wallets:', error);
                 await this.bot.deleteMessage(chatId, loadingMessage.message_id);
@@ -76,12 +82,9 @@ export class WalletHandler extends BaseHandler {
                         
                         const networkEmoji = getNetworkEmoji(networkName);
 
-                        const defaultStatus = wallet.isDefault ? '✅ Default Wallet\n\n' : '';
-                        const walletMessage = `*${defaultStatus}*` +
-                            `${networkEmoji} ${networkName}\n\n` +
+                        const walletMessage = `*Network*: ${networkEmoji} ${networkName.toUpperCase()}\n\n` +
                             `*📝Wallet Address*:\n\`\`\`\n${wallet.walletAddress}\n\`\`\`\n\n` +
-
-                            `💼 *Type*: \`${wallet.walletType}\``;
+                            `💼 *Type*: \`${wallet.walletType.toUpperCase()}\``;
 
                         // Create different button based on default status
                         const buttonText = wallet.isDefault ?
@@ -105,12 +108,12 @@ export class WalletHandler extends BaseHandler {
                     }
                 }
                 // Add action buttons at the end
-                await this.bot.sendMessage(chatId, 'Options...', {
+                await this.bot.sendMessage(chatId, 'More Options...', {
                     reply_markup: {
                         inline_keyboard: [
                             [
                                 { text: '💸 Send Funds', callback_data: 'send_funds' },
-                                { text: '💰 View Balances', callback_data: 'view_balances' },
+                                { text: '💰 View Balances', callback_data: 'view_balance' },
                             ],
                             [
                                 { text: '🤖 Commands', callback_data: 'commands' },
@@ -127,6 +130,48 @@ export class WalletHandler extends BaseHandler {
                 `⚠️ Oops.. Something went wrong. Please try again.`
             );
             clearErrorMessage(this.bot, chatId, errorMessage.message_id, 5000);
+        }
+    }
+
+    async handleSetDefaultWallet(walletId: string, chatId: number) {
+        try {
+            const walletToSet = await this.api.getWallets()
+                .then(wallets => wallets.find(w => w.id === walletId));
+
+            if (!walletToSet) {
+                await this.bot.sendMessage(chatId, '❌ Wallet not found');
+                return;
+            }
+
+            // Check if this wallet address is already default on another ID
+            const existingWallet = await this.api.getWalletByAddress(
+                walletToSet.walletAddress,
+                walletToSet.network
+            );
+
+            if (existingWallet && existingWallet.id !== walletId && existingWallet.isDefault) {
+                await this.bot.sendMessage(
+                    chatId,
+                    '⚠️ This wallet address is already set as default with a different ID.\nRemoving duplicate...'
+                );
+            }
+
+            // Ensure single default before setting new one
+            await this.api.ensureSingleDefaultWallet(walletToSet.network);
+
+            // Set new default wallet
+            const result = await this.api.setDefaultWallet(walletId);
+
+            await this.bot.sendMessage(
+                chatId,
+                `✅ Successfully set as default wallet for ${getNetworkName(result.network)}`
+            );
+        } catch (error: any) {
+            console.error('Error setting default wallet:', error);
+            await this.bot.sendMessage(
+                chatId,
+                '❌ Failed to set default wallet. Please try again.'
+            );
         }
     }
 
@@ -153,6 +198,7 @@ export class WalletHandler extends BaseHandler {
                 '🔄 Fetching balances...');
 
             const balances = await this.api.getWalletBalances()
+            console.log("balances", balances);
             await this.bot.deleteMessage(chatId, loadingMessage.message_id);
 
             // Send a header message
@@ -192,7 +238,10 @@ export class WalletHandler extends BaseHandler {
                         { text: '🔄 Refresh Balances', callback_data: 'refresh_balance'},
                         { text: '💸 Send funds', callback_data: 'send_funds'}
                     ],
-                        [ { text: '❓ Help ', callback_data: 'back' }]
+                        [
+                            { text: '👛 View Wallets', callback_data: 'wallets' },
+                            { text: '❓ Help ', callback_data: 'back' }
+                        ]
                     ]
                 }
             });

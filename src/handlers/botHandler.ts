@@ -175,7 +175,8 @@ export class BotHandler {
                 default:
                     await this.bot.sendMessage(
                         chatId,
-                        'Invalid state. Please try again.'
+                        'Invalid message. I cant understand the command\n' +
+                        'Please try again or check commands using /help'
                     );
                     break;
             }
@@ -446,9 +447,11 @@ export class BotHandler {
                             chat_id: chatId,
                             message_id: messageId
                         });
+                        
 
-                        // Call API to set default wallet
-                        await this.api.setDefaultWallet(walletId);
+                        await this.walletHandler.handleSetDefaultWallet(walletId, chatId);
+                        // Update session state
+                        this.sessions.setState(chatId, 'AUTHENTICATED');
 
                         // Update button to show success
                         await this.bot.editMessageReplyMarkup({

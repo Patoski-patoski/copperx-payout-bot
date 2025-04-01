@@ -8,6 +8,7 @@ import {
 } from '../utils/copperxUtils';
 
 export class BankWithdrawalHandler extends BaseHandler {
+    
     async handleWithdraw(msg: TelegramBot.Message) {
         const { chat: { id: chatId } } = msg;
 
@@ -24,8 +25,6 @@ export class BankWithdrawalHandler extends BaseHandler {
 
             // First check if user has a default wallet
             const defaultWallet = await this.api.getDefaultWallet();
-            console.log("Default wallet", defaultWallet);
-            
             if (!defaultWallet) {
                 const errorMessage = await this.bot.sendMessage(
                     chatId,
@@ -76,6 +75,8 @@ export class BankWithdrawalHandler extends BaseHandler {
         }
     }
 
+
+
     private async requestWithdrawalAmount(chatId: number) {
         await this.bot.sendMessage(
             chatId,
@@ -84,6 +85,7 @@ export class BankWithdrawalHandler extends BaseHandler {
         );
         this.sessions.setState(chatId, 'WAITING_WITHDRAWAL_AMOUNT');
     }
+
 
     async handleWithdrawalAmount(chatId: number, amountText: string) {
         const amount = amountText.trim();

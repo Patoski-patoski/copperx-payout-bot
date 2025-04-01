@@ -31,6 +31,7 @@ export class ProfileHandler extends BaseHandler {
                 ' 🔄 Fetching your profile...'
             );
             const profile = await this.api.getUserProfile();
+            
 
             // cREATE profile message
             const profileMessage = this.BOT_MESSAGES.PROFILE_TEMPLATE
@@ -52,7 +53,7 @@ export class ProfileHandler extends BaseHandler {
                             { text: '🔒 KYC', callback_data: 'kyc' },
                         ],
                         [
-                            { text: '🔒 Back', callback_data: 'commands' },
+                            { text: '🔙 Back', callback_data: 'commands' },
                         ]
                     ]
                 }

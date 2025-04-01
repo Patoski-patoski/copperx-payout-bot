@@ -21,6 +21,7 @@ import {
 import {
   EmailOtpResponse,
 } from '../types/index';
+import { logger } from '../utils/logger';
 
 export class CopperxApiService {
   private api: AxiosInstance;
@@ -232,6 +233,7 @@ export class CopperxApiService {
         const response = await this.api.get(`/api/kycs`);
 
         if (!response.data) throw new Error('No KYC data received');
+        console.log("KYC", response.data.data)
         return response.data;
       } catch (error: any) {
         console.error("Failed to get KYC status:", {
@@ -257,24 +259,27 @@ export class CopperxApiService {
   // Wallets
   // Get all wallets
   async getWallets(): Promise<CopperxWallet[]> {
-    try {
-      const response = await this.api.get('/api/wallets');
-      return response.data;
-    } catch (error: any) {
-      console.error("Failed to get wallets:", {
-        statusCode: error.statusCode,
-        error: error.error,
-        message: error.message,
-      });
+    return this.retry('Get Wallets', async () => {
+      try {
+        const response = await this.api.get('/api/wallets');
+        return response.data;
+      } catch (error: any) {
+        console.error("Failed to get wallets:", {
+          statusCode: error.statusCode,
+          error: error.error,
+          message: error.message,
+        });
 
-      throw new Error(
-        error.message ||
-        'Failed to get wallets. Please try again later.'
-      );
-    }
+        throw new Error(
+          error.message ||
+          'Failed to get wallets. Please try again later.'
+        );
+      }
+    });
   }
 
   async getWalletBalances(): Promise<CopperxWalletBalance[]> {
+    return this.retry('Get Wallet Balances', async () => {
     try {
       const response = await this.api.get('/api/wallets/balances');
       return response.data;
@@ -290,98 +295,187 @@ export class CopperxApiService {
         'Failed to get wallet balances. Please try again later.'
       );
     }
+  });
   }
 
   // Set default wallet
   async setDefaultWallet(walletId: string): Promise<CopperxWallet> {
+    return this.retry('Set Default Wallet', async () => {
+      try {
+        // Get all wallets first
+        const wallets = await this.getWallets();
+        console.log("Walletsoooo", wallets);
+        const walletToSet = wallets.find(w => w.id === walletId);
+        if (!walletToSet) {
+          throw new Error('Wallet not found');
+        }
+        // Check for existing default wallet with same network
+        const existingDefault = wallets.find(w =>
+          w.isDefault &&
+          w.network === walletToSet.network &&
+          w.id !== walletId
+        );
+
+        if (existingDefault) {
+          console.warn(`Found existing default wallet for network ${walletToSet.network}:`,
+            existingDefault.id);
+        }
+
+        const response = await this.api.post(
+          `/api/wallets/default`,
+          { walletId });
+        
+        return response.data;
+
+      } catch (error: any) {
+        console.error("Failed to set default wallet:", {
+          statusCode: error.statusCode,
+          error: error.error,
+          message: error.message,
+        });
+        throw new Error(
+          error.message ||
+          'Failed to set default wallet. Please try again later.'
+        );
+      }
+    });
+  }
+
+  async ensureSingleDefaultWallet(network: string): Promise<void> {
+    return this.retry('Ensure Single Default Wallet', async () => {
+      try {
+        const wallets = await this.getWallets();
+        const defaultWallets = wallets.filter(w =>
+          w.isDefault && w.network === network
+        );
+
+        if (defaultWallets.length > 1) {
+          console.warn(`Found multiple default wallets for network ${network}:`,
+            defaultWallets.map(w => w.id));
+
+          // Keep the most recently updated wallet as default
+          const sortedWallets = defaultWallets.sort((a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+
+          // Update all except the most recent to non-default
+          for (let i = 1; i < sortedWallets.length; i++) {
+            console.log(`Removing default status from wallet: ${sortedWallets[i].id}`);
+            await this.api.post(`/api/wallets/${sortedWallets[i].id}`, {
+              isDefault: false
+            });
+          }
+        }
+      } catch (error: any) {
+        console.error("Failed to ensure single default wallet:", error);
+      }
+    });
+  }
+
+  async getWalletByAddress(walletAddress: string, network: string):
+    Promise<CopperxWallet | null> {
+    return this.retry('Get Wallet by Address', async () => {
     try {
-      const response = await this.api.post(
-        `/api/wallets/default`,
-        { walletId });
-      return response.data;
+      const wallets = await this.getWallets();
+      return wallets.find(w =>
+        w.walletAddress.toLowerCase() === walletAddress.toLowerCase() &&
+        w.network === network
+      ) || null;
     } catch (error: any) {
-      console.error("Failed to set default wallet:", {
+      console.error("Failed to get wallet by address:", {
         statusCode: error.statusCode,
         error: error.error,
         message: error.message,
       });
-      throw new Error(
-        error.message ||
-        'Failed to set default wallet. Please try again later.'
-      );
+      return null;
     }
+  });
   }
 
   // Get default walletAddress
   async getDefaultWallet(): Promise<CopperxWallet> {
-    try {
-      const response = await this.getWallets();
-      const defaultWallet = response.find((wallet: CopperxWallet) => wallet.isDefault);
-      if (!defaultWallet) throw new Error('No default wallet found');
-      console.log("DEF WALLET", defaultWallet);
+    return this.retry('Get Default Wallet', async () => {
+      try {
+        const response = await this.getWallets();
+        const defaultWallet = response.find((wallet: CopperxWallet) => wallet.isDefault);
+        if (!defaultWallet) throw new Error('No default wallet found');
       
-      return defaultWallet;
-    } catch (error: any) {
-      console.error("Failed to get default wallet:", {
-        statusCode: error.statusCode,
-        error: error.error,
-        message: error.message,
-      });
-      throw new Error(
-        error.message ||
-        'Failed to get default wallet. Please try again later.'
-      );
-    }
+        return defaultWallet;
+      } catch (error: any) {
+        console.error("Failed to get default wallet:", {
+          statusCode: error.statusCode,
+          error: error.error,
+          message: error.message,
+        });
+        throw new Error(
+          error.message ||
+          'Failed to get default wallet. Please try again later.'
+        );
+      }
+    });
   }
 
   // Transactions
   // Get all transactions
   async getTransactionsHistory(page: number = 1, limit: number = 10) {
-    try {
-      const response = await this.api.get('/api/transfers', {
-        params: { page, limit }
-      });
-      console.log('Transaction history response:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('Failed to fetch transaction history:', {
-        statusCode: error.statusCode,
-        error: error.error,
-        message: error.message,
-      });
-      throw new Error(
-        error.message ||
-        'Failed to fetch transaction history. Please try again later.'
-      );
-    }
+    return this.retry('Get Transactions History', async () => {
+      try {
+        const response = await this.api.get('/api/transfers', {
+          params: { page, limit }
+        });
+        return response.data;
+      } catch (error: any) {
+        console.error('Failed to fetch transaction history:', {
+          statusCode: error.statusCode,
+          error: error.error,
+          message: error.message,
+        });
+        throw new Error(
+          error.message ||
+          'Failed to fetch transaction history. Please try again later.'
+        );
+      }
+    });
   }
 
   async getAccounts(): Promise<AccountsResponse> {
-    try {
-      const response = await this.api.get('/api/accounts');
-      console.log("Accounts response:", response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error("Failed to fetch accounts:", {
-        statusCode: error.statusCode,
-        error: error.error,
-        message: error.message,
-      });
-      throw new Error(
-        error.message ||
-        'Failed to fetch accounts. Please try again later.'
-      );
-    }
+    return this.retry('Get Accounts', async () => {
+      try {
+        const profile = await this.getUserProfile();
+        const id: string = profile.id as string;
+        const sresponse = await this.api.get(`/api/accounts/${id}`);
+        // logger.info("SSSProfile", sresponse);
+        // logger.error("SSSProfile", sresponse.data.data);
+        const response = await this.api.get(`/api/accounts/`);
+        logger.warn("Response", {
+          response: response,
+          response_data: response.data,
+        });
+        return response.data;
+      } catch (error: any) {
+        console.error("Failed to fetch accounts:", {
+          statusCode: error.statusCode,
+          error: error.error,
+          message: error.message,
+        });
+        throw new Error(
+          error.message ||
+          'Failed to fetch accounts. Please try again later.'
+        );
+      }
+    });
   }
 
   async getDefaultBankAccount(): Promise<CopperxAccount | null> {
     try {
       const response = await this.getAccounts();
+      const profile = await this.getUserProfile();
       const defaultAccount = response.data.find(account =>
-        account.isDefault &&
+        account.id == profile.id &&
         account.bankAccount &&
         account.status === 'active'
       );
+      
       return defaultAccount || null;
     } catch (error) {
       console.error("Failed to get default bank account:", error);
@@ -406,7 +500,6 @@ export class CopperxApiService {
         : request;
 
       const response = await this.api.post(endpoint, payload);
-      console.log("Transfer response:", response.data);
       return response.data;
     } catch (error: any) {
       console.error("Failed to send transfer:", {
@@ -422,7 +515,6 @@ export class CopperxApiService {
   async getOffRampQuote(request: OffRampQuoteRequest): Promise<any> {
     try {
       const response = await this.api.post('/api/quotes/offramp', request);
-      console.log("Offramp quote response:", response.data);
       return response.data;
     } catch (error: any) {
       console.error("Failed to get offramp quote:", {
@@ -438,7 +530,6 @@ export class CopperxApiService {
   async sendBankWithdrawal(request: BankWithdrawalRequest): Promise<any> {
     try {
       const response = await this.api.post('/api/transfers/offramp', request);
-      console.log("Bank withdrawal response:", response.data);
       return response.data;
     } catch (error: any) {
       console.error("Failed to send bank withdrawal:", {
