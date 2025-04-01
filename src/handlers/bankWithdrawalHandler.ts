@@ -131,7 +131,7 @@ export class BankWithdrawalHandler extends BaseHandler {
                 sourceCountry,
                 destinationCountry,
                 amount: baseAmount,
-                currency: 'USDC',
+                currency: 'USD',
                 onlyRemittance: true,
                 preferredBankAccountId: bankAccount.id
             };
