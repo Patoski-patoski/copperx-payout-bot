@@ -35,6 +35,7 @@ export class AuthHandler extends BaseHandler {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     force_reply: true,
+                    input_field_placeholder: 'Enter your Email: ',
                 },
             }
         );
@@ -120,7 +121,7 @@ export class AuthHandler extends BaseHandler {
             console.error('Error in handleEmailInput:', error);
             const errorMessage = await this.bot.sendMessage(
                 chatId,
-                `OOps.. Failed to send OTP. Please try again later.`
+                `OOps.. Failed to send OTP. Please enter your email again:.`
             );
             clearErrorMessage(this.bot, chatId, errorMessage.message_id);
             this.sessions.setState(chatId, 'WAITING_EMAIL');
@@ -136,6 +137,14 @@ export class AuthHandler extends BaseHandler {
         try {
             const [email, sid] = this.getSessionData(chatId);
             const authResponse = await this.api.verifyEmailOtp(email, otp, sid);
+            if (!authResponse) {
+                const errorMessage = await this.bot.sendMessage(
+                    chatId,
+                    this.BOT_MESSAGES.INVALID_OTP
+                );
+                clearErrorMessage(this.bot, chatId, errorMessage.message_id);
+                return;
+            }
 
             this.updateSessionAfterLogin(chatId, authResponse);
             await this.bot.sendMessage(chatId,
@@ -154,7 +163,8 @@ export class AuthHandler extends BaseHandler {
             console.error('OTP verification error:', error);
             const errorMessage = await this.bot.sendMessage(
                 chatId,
-                `Opps.. Failed to verify OTP. Please input OTP again.`
+                `Opps.. Failed to verify OTP. ${error.message} ` +
+                `Please check OTP and try again.`
             );
             clearErrorMessage(this.bot, chatId, errorMessage.message_id);
         }

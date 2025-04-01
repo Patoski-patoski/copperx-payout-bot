@@ -64,6 +64,7 @@ export class SessionManager {
         const session = this.sessions.get(chatId) || { chatId, state };
         session.state = state;
         this.sessions.set(chatId, session);
+        console.log("Session", session);
     }
 
     // get the state of the session

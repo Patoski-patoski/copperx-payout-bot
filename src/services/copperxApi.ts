@@ -441,16 +441,7 @@ export class CopperxApiService {
   async getAccounts(): Promise<AccountsResponse> {
     return this.retry('Get Accounts', async () => {
       try {
-        const profile = await this.getUserProfile();
-        const id: string = profile.id as string;
-        const sresponse = await this.api.get(`/api/accounts/${id}`);
-        // logger.info("SSSProfile", sresponse);
-        // logger.error("SSSProfile", sresponse.data.data);
         const response = await this.api.get(`/api/accounts/`);
-        logger.warn("Response", {
-          response: response,
-          response_data: response.data,
-        });
         return response.data;
       } catch (error: any) {
         console.error("Failed to fetch accounts:", {
@@ -469,12 +460,8 @@ export class CopperxApiService {
   async getDefaultBankAccount(): Promise<CopperxAccount | null> {
     try {
       const response = await this.getAccounts();
-      const profile = await this.getUserProfile();
-      const defaultAccount = response.data.find(account =>
-        account.id == profile.id &&
-        account.bankAccount &&
-        account.status === 'active'
-      );
+      const defaultAccount = response.data[0];
+      console.log("Default Account", defaultAccount);
       
       return defaultAccount || null;
     } catch (error) {

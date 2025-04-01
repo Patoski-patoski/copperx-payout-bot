@@ -22,9 +22,9 @@ export class BankWithdrawalHandler extends BaseHandler {
         }
 
         try {
-
             // First check if user has a default wallet
             const defaultWallet = await this.api.getDefaultWallet();
+
             if (!defaultWallet) {
                 const errorMessage = await this.bot.sendMessage(
                     chatId,
@@ -81,7 +81,13 @@ export class BankWithdrawalHandler extends BaseHandler {
         await this.bot.sendMessage(
             chatId,
             '💰 Please enter the amount you want to withdraw:',
-            { parse_mode: 'Markdown' }
+            {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    force_reply: true,
+                    input_field_placeholder: 'Enter amount in USDC: ',
+                }
+             }
         );
         this.sessions.setState(chatId, 'WAITING_WITHDRAWAL_AMOUNT');
     }
@@ -107,12 +113,23 @@ export class BankWithdrawalHandler extends BaseHandler {
         try {
             const bankAccount = this.sessions.getWithdrawalBankAccount(chatId);
             if (!bankAccount) {
+                await this.bot.sendMessage(
+                    chatId,
+                    '❌ Bank account information not found. Please try again.'
+                );
+                return;
+            }
+            if (!bankAccount) {
                 throw new Error('Bank account information not found');
             }
 
+            const defaultAccount = await this.api.getDefaultBankAccount();
+            const sourceCountry = defaultAccount?.country || '';
+            const destinationCountry = sourceCountry;
+
             const quoteRequest: OffRampQuoteRequest = {
-                sourceCountry: 'none',
-                destinationCountry: bankAccount.country.toLowerCase(),
+                sourceCountry,
+                destinationCountry,
                 amount: baseAmount,
                 currency: 'USDC',
                 onlyRemittance: true,
@@ -120,13 +137,14 @@ export class BankWithdrawalHandler extends BaseHandler {
             };
 
             const quote = await this.api.getOffRampQuote(quoteRequest);
+            console.log("Quote setWitdraquote", quote);
             this.sessions.setWithdrawalQuote(chatId, quote);
 
             // Show withdrawal summary before purpose selection
             await this.showWithdrawalSummary(chatId, {
                 amount: amountText,
-                bankName: bankAccount.bankName,
-                accountNumber: bankAccount.accountNumber
+                bankName: defaultAccount?.bankAccount.bankName,
+                accountNumber: defaultAccount?.bankAccount.bankAccountNumber
             });
 
             // Show purpose selection
@@ -144,13 +162,13 @@ export class BankWithdrawalHandler extends BaseHandler {
 
     private async showWithdrawalSummary(chatId: number, details: {
         amount: string,
-        bankName: string,
-        accountNumber: string
+        bankName: string | undefined,
+        accountNumber: string | undefined
     }) {
         const message = `💳 *Withdrawal Summary*\n\n` +
-            `Amount: ${details.amount}\n` +
-            `Bank: ${details.bankName}\n` +
-            `Account: ****${details.accountNumber.slice(-4)}\n\n` +
+            `Amount to Withdraw: ${details.amount}\n` +
+            `Withdraw from Bank: ${details.bankName}\n` +
+            `Withdrawer Account Number: ${details.accountNumber}\n\n` +
             `Please select the purpose of this withdrawal:`;
 
         await this.bot.sendMessage(chatId, message, {
@@ -158,7 +176,7 @@ export class BankWithdrawalHandler extends BaseHandler {
         });
     }
 
-    private async showPurposeSelection(chatId: number) {
+    async showPurposeSelection(chatId: number) {
         await this.bot.sendMessage(
             chatId,
             '🎯 Select transfer purpose:',
@@ -166,21 +184,21 @@ export class BankWithdrawalHandler extends BaseHandler {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            { text: '👤 Self', callback_data: 'bulk_purpose_self' },
-                            { text: '🎁 Gift', callback_data: 'bulk_purpose_gift' },
-                            { text: '💰 Salary', callback_data: 'bulk_purpose_salary' },
+                            { text: '👤 Self', callback_data: 'bank_purpose_self' },
+                            { text: '🎁 Gift', callback_data: 'bank_purpose_gift' },
+                            { text: '💰 Salary', callback_data: 'bank_purpose_salary' },
                         ],
                         [
-                            { text: '👨‍👩‍👧‍👦 Family', callback_data: 'bulk_purpose_family' },
-                            { text: '💰 Saving', callback_data: 'bulk_purpose_saving' },
-                            { text: '💰 Income', callback_data: 'bulk_purpose_income' },
+                            { text: '👨‍👩‍👧‍👦 Family', callback_data: 'bank_purpose_family' },
+                            { text: '💰 Saving', callback_data: 'bank_purpose_saving' },
+                            { text: '💰 Income', callback_data: 'bank_purpose_income' },
                         ],
                         [
-                            { text: '💸 reimbursement', callback_data: 'bulk_purpose_reimbursement' },
-                            { text: '🏠 Home Improvement', callback_data: 'bulk_purpose_home_improvement' },
+                            { text: '💸 reimbursement', callback_data: 'bank_purpose_reimbursement' },
+                            { text: '🏠 Home Improvement', callback_data: 'bank_purpose_home_improvement' },
                         ],
                         [
-                            { text: '🎓 Education Support', callback_data: 'bulk_purpose_education_support' },
+                            { text: '🎓 Education Support', callback_data: 'bank_purpose_education_support' },
                             { text: '❌ Cancel', callback_data: 'transfer_cancel' }
                         ],
                     ]
@@ -191,6 +209,7 @@ export class BankWithdrawalHandler extends BaseHandler {
 
     async handlePurposeSelection(chatId: number, purpose: string) {
         const quote = this.sessions.getWithdrawalQuote(chatId);
+        console.log("Quote", quote);
         const bankAccount = this.sessions.getWithdrawalBankAccount(chatId);
         if (!quote) {
             await this.bot.sendMessage(

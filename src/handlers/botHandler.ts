@@ -361,9 +361,15 @@ export class BotHandler {
                     return;
                 }
 
+                if (data.startsWith('bank_purpose_')) {
+                    const purpose = data.replace('bank_purpose_', '');
+                    await this.bankWithdrawalHandler.handlePurposeSelection(chatId, purpose);
+                    return;
+                }
+
                 if (data.startsWith('bulk_purpose_')) {
                     const purpose = data.replace('bulk_purpose_', '');
-                    await this.bulkTransferHandler.handlePurposeSelection(chatId, purpose);
+                    await this.bulkTransferHandler.handleBulkPurposeSelection(chatId, purpose);
                     return;
                 }
 

@@ -97,7 +97,10 @@ export class TransferHandler extends BaseHandler {
             this.BOT_MESSAGES.TRANSFER_ENTER_AMOUNT,
             {
                 parse_mode: 'Markdown',
-                reply_markup: { force_reply: true }
+                reply_markup: {
+                    force_reply: true,
+                    input_field_placeholder: 'Enter amount in USDC: ',
+                }
             }
         );
 
@@ -125,7 +128,12 @@ export class TransferHandler extends BaseHandler {
         await this.bot.sendMessage(
             chatId,
             this.BOT_MESSAGES.TRANSFER_ENTER_AMOUNT,
-            {reply_markup: {force_reply: true}}
+            {
+                reply_markup: {
+                    force_reply: true,
+                    input_field_placeholder: 'Enter amount in USDC: ',
+                }
+            }
         );
         this.sessions.setState(chatId, 'WAITING_TRANSFER_AMOUNT');
     }

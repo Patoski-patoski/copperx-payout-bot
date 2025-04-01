@@ -128,38 +128,6 @@ export class BulkTransferHandler extends BaseHandler {
         return true;
     }
 
-    // // Add new method to handle confirmation response
-    // async handleBulkConfirmation(msg: TelegramBot.Message) {
-    //     const { chat: { id: chatId }, text } = msg;
-    //     const response = text?.toLowerCase();
-
-    //     switch (response) {
-    //         case 'yes':
-    //             await this.processBulkTransfer(chatId);
-    //             break;
-    //         case 'no':
-    //             await this.bot.sendMessage(
-    //                 chatId,
-    //                 '❌ Bulk transfer cancelled.',
-    //             );
-    //             this.sessions.setState(chatId, 'BULK_TRANSFER_MENU');
-    //             break;
-    //         case 'cancel':
-    //             await this.bot.sendMessage(
-    //                 chatId,
-    //                 '🔙 Returned to transfer menu'
-    //             );
-    //             this.sessions.setState(chatId, 'AUTHENTICATED');
-    //             break;
-    //         default:
-    //             await this.bot.sendMessage(
-    //                 chatId,
-    //                 '❌ Invalid response. Please reply with YES, NO, or cancel'
-    //             );
-    //             return;
-    //     }
-    // }
-  
 
     async handleBulkAmount(chatId: number, text: string) {
         const amount = text.trim();
@@ -210,7 +178,7 @@ export class BulkTransferHandler extends BaseHandler {
         );        
     }
 
-    async handlePurposeSelection(chatId: number, purpose: string) {
+    async handleBulkPurposeSelection(chatId: number, purpose: string) {
         const recipient = this.sessions.getCurrentBulkRecipient(chatId);
         
         if (!recipient) {

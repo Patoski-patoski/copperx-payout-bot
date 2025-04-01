@@ -230,10 +230,9 @@ export class WalletHandler extends BaseHandler {
                 });
             }
 
-            await this.bot.sendMessage(chatId, '.', {
+            await this.bot.sendMessage(chatId, 'More Options:', {
                 parse_mode: 'Markdown',
                 reply_markup: {
-                    force_reply: true,
                     inline_keyboard: [[
                         { text: '🔄 Refresh Balances', callback_data: 'refresh_balance'},
                         { text: '💸 Send funds', callback_data: 'send_funds'}
