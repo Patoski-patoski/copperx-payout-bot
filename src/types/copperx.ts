@@ -118,9 +118,9 @@ export interface BankWithdrawalRequest {
     purposeCode: string;
     quotePayload: string;
     quoteSignature: string;
-    preferredWalletId: string;
     // Optional fields
     invoiceNumber?: string;
+    preferredWalletId?: string;
     note?: string;
     invoiceUrl?: string;
     sourceOfFundsFile?: string;
@@ -213,6 +213,18 @@ export interface BankAccount {
     isDefault: boolean;
 }
 
+export interface QuoteBreakdown {
+    amount: string,
+    bankName: string | undefined,
+    accountNumber: string | undefined
+    arrivalTime: string,
+    toCurrency: string,
+    feePercentage: string,
+    fixedFee: string,
+    totalFee: string,
+    transferMethod: string
+    toAmount: string;
+}
 
 export interface PusherDepositEvent {
     amount: string;

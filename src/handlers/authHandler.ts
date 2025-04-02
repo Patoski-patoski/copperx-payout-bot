@@ -103,6 +103,7 @@ export class AuthHandler extends BaseHandler {
                     parse_mode: "Markdown",
                     reply_markup: {
                         force_reply: true,
+                        input_field_placeholder: 'Enter OTP: ',
                     }
                 }
             );
@@ -114,7 +115,7 @@ export class AuthHandler extends BaseHandler {
                     { reply_markup: offlineKeyBoardAndBack("↪ Send OTP again", "sendotp")}
                 );
                 clearErrorMessage(this.bot, chatId, otpMessage.message_id, 5000);
-            }, 15000);
+            }, 25000);
             return;
 
         } catch (error: any) {
@@ -163,7 +164,7 @@ export class AuthHandler extends BaseHandler {
             console.error('OTP verification error:', error);
             const errorMessage = await this.bot.sendMessage(
                 chatId,
-                `Opps.. Failed to verify OTP. ${error.message} ` +
+                `Opps.. ${error.message} ` +
                 `Please check OTP and try again.`
             );
             clearErrorMessage(this.bot, chatId, errorMessage.message_id);

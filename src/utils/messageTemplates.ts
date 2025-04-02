@@ -160,4 +160,30 @@ Please confirm this transfer.`,
 *Recipient wallet:* %destinationAccount.walletAddress%`,
 
         TRANSFER_ERROR: 'Transfer failed: %message%',
+        WITHDRAWAL_MESSAGE: `💳 * Confirm Withdrawal Summary*
+
+*🏧 Amount to Withdraw:* %amount%
+
+*💲 Currency:* %currency%
+
+*🚕 Fee Percentage:* %feePercentage%
+
+*✅ Total Fee:* %totalFee%
+
+*🏦 Transfer Method:* %transferMethod%
+
+*🏦 Withdraw from Bank:* %bankName%
+
+*📤 Withdrawer Account Number:* %accountNumber%
+
+*⏳ ArrivalTime:* %arrivalTime%
+
+
+* ⚠ Total amount to withdraw \\+ Fee/Charges Applied:*
+
+* %toAmount% *
+
+
+*Note*: Please ensure that the details are correct before proceeding with the withdrawal`
+
 };

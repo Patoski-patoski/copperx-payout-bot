@@ -33,7 +33,7 @@ export class ProfileHandler extends BaseHandler {
             const profile = await this.api.getUserProfile();
             
 
-            // cREATE profile message
+            // CREATE profile message
             const profileMessage = this.BOT_MESSAGES.PROFILE_TEMPLATE
                 .replace('%id%', profile.id || 'N/A')
                 .replace('%email%', profile.email || 'Not provided')

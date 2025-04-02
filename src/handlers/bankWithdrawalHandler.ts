@@ -1,10 +1,15 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
-import { OffRampQuoteRequest, BankWithdrawalRequest } from '../types/copperx';
+import {
+    OffRampQuoteRequest,
+    BankWithdrawalRequest,
+    QuoteBreakdown,
+} from '../types/copperx';
 import {
     clearErrorMessage,
     convertFromBaseUnit,
-    convertToBaseUnit
+    convertToBaseUnit,
+    offlineKeyBoardAndBack
 } from '../utils/copperxUtils';
 
 export class BankWithdrawalHandler extends BaseHandler {
@@ -85,7 +90,7 @@ export class BankWithdrawalHandler extends BaseHandler {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     force_reply: true,
-                    input_field_placeholder: 'Enter amount in USDC: ',
+                    input_field_placeholder: 'Enter amount in USD: ',
                 }
              }
         );
@@ -95,12 +100,18 @@ export class BankWithdrawalHandler extends BaseHandler {
 
     async handleWithdrawalAmount(chatId: number, amountText: string) {
         const amount = amountText.trim();
+        const parsedAmount: number = parseInt(amountText, 10);
+        const min = convertFromBaseUnit(5000000000);
+        const max = convertFromBaseUnit(5000000000000);
         if (!/^[0-9]+(\.[0-9]+)?$/.test(amount)
-            || parseFloat(amount) <= 0) {
+            || parsedAmount < min
+            || parsedAmount > max) {
             
             await this.bot.sendMessage(
                 chatId,
-                '❌ Invalid amount. Please enter a valid number greater than 0.'
+                '❌ Invalid amount. Please enter a valid amount in USD.\n\n' +
+                `*Note*: Minimum withdrawal amount is ${min} USDC and maximum is ${max} USDC.`,
+                { parse_mode: 'Markdown' }
             );
             return;
         }
@@ -111,6 +122,7 @@ export class BankWithdrawalHandler extends BaseHandler {
 
         // Get quote
         try {
+            
             const bankAccount = this.sessions.getWithdrawalBankAccount(chatId);
             if (!bankAccount) {
                 await this.bot.sendMessage(
@@ -124,12 +136,10 @@ export class BankWithdrawalHandler extends BaseHandler {
             }
 
             const defaultAccount = await this.api.getDefaultBankAccount();
-            const sourceCountry = defaultAccount?.country || '';
-            const destinationCountry = sourceCountry;
 
             const quoteRequest: OffRampQuoteRequest = {
-                sourceCountry,
-                destinationCountry,
+                sourceCountry: 'none',
+                destinationCountry: 'usa',
                 amount: baseAmount,
                 currency: 'USD',
                 onlyRemittance: true,
@@ -137,14 +147,47 @@ export class BankWithdrawalHandler extends BaseHandler {
             };
 
             const quote = await this.api.getOffRampQuote(quoteRequest);
-            console.log("Quote setWitdraquote", quote);
+            if (!quote) {
+                await this.bot.sendMessage(chatId,
+                    '❌ Failed to get withdrawal quote.',
+                    {
+                       parse_mode: "Markdown",
+                       reply_markup: offlineKeyBoardAndBack("❗ Exit", "help") 
+                    }
+                )
+                return;
+            }
             this.sessions.setWithdrawalQuote(chatId, quote);
 
+            let parsedQuotePayload, amount, toAmount, fixedFee, totalFee;
+
+            try {
+                parsedQuotePayload = typeof quote.quotePayload === 'string'
+                    ? JSON.parse(quote.quotePayload)
+                    : quote.quotePayload;
+                
+                amount = convertFromBaseUnit(parseInt(parsedQuotePayload.amount));
+                toAmount = convertFromBaseUnit(parseInt(parsedQuotePayload.toAmount));
+                totalFee = convertFromBaseUnit(parseInt(parsedQuotePayload.totalFee));
+
+            } catch (parseError) {
+                console.error('Error parsing quote payload:', parseError);
+                throw new Error('Invalid quote payload format');
+            }
+
+            console.log(parsedQuotePayload);
             // Show withdrawal summary before purpose selection
             await this.showWithdrawalSummary(chatId, {
-                amount: amountText,
+                amount: amount.toString(),
+                toCurrency: parsedQuotePayload.toCurrency,
+                feePercentage: parsedQuotePayload.feePercentage,
+                fixedFee: parsedQuotePayload.fixedFee,
+                totalFee: totalFee.toString(),
+                transferMethod: parsedQuotePayload.destinationMethod,
                 bankName: defaultAccount?.bankAccount.bankName,
-                accountNumber: defaultAccount?.bankAccount.bankAccountNumber
+                accountNumber: defaultAccount?.bankAccount.bankAccountNumber,
+                arrivalTime: quote.arrivalTime || '2-4 Business days',
+                toAmount: toAmount.toString()
             });
 
             // Show purpose selection
@@ -154,26 +197,85 @@ export class BankWithdrawalHandler extends BaseHandler {
             console.error('Error getting withdrawal quote:', error);
             await this.bot.sendMessage(
                 chatId,
-                '❌ Failed to get withdrawal quote.\n\n' +
-                'Please try again.'
+                '❌ Failed to set up withdrawal\n',
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        input_field_placeholder: 'Enter amount in USD: ',
+                        inline_keyboard: [
+                            [
+                                { text: '🔄 Retry', callback_data: 'retry_withdrawal' },
+                                { text: '❌ Cancel', callback_data: 'back' }
+                            ]
+                        ]
+                    }
+                 }
             );
         }
     }
 
-    private async showWithdrawalSummary(chatId: number, details: {
-        amount: string,
-        bankName: string | undefined,
-        accountNumber: string | undefined
-    }) {
-        const message = `💳 *Withdrawal Summary*\n\n` +
-            `Amount to Withdraw: ${details.amount}\n` +
-            `Withdraw from Bank: ${details.bankName}\n` +
-            `Withdrawer Account Number: ${details.accountNumber}\n\n` +
-            `Please select the purpose of this withdrawal:`;
+    private async showWithdrawalSummary(chatId: number,
+        QuoteBreakdown: QuoteBreakdown) {
+        const details = QuoteBreakdown;
 
-        await this.bot.sendMessage(chatId, message, {
-            parse_mode: 'Markdown'
+        const withdrawalMessage = this.BOT_MESSAGES.WITHDRAWAL_MESSAGE
+            .replace('%amount%', `\`${details.amount}\``)
+            .replace('%toAmount%', `\`${details.toAmount}\``)
+            .replace('%currency%', `\`${details.toCurrency}\``)
+            .replace('%feePercentage%', `\`${details.feePercentage}\``)
+            .replace('%totalFee%', `\`${details.totalFee}\``)
+            .replace('%transferMethod%', `\`${details.transferMethod}\``)
+            .replace('%bankName%', `\`${details.bankName}\``)
+            .replace('%accountNumber%', `\`${details.accountNumber}\``)
+            .replace('%arrivalTime%', `\`${details.arrivalTime}\``)
+
+        await this.bot.sendMessage(chatId, withdrawalMessage, {
+            parse_mode: 'MarkdownV2',
         });
+
+    }
+
+    async handlePurposeSelection(chatId: number, purpose: string) {
+        const quote = this.sessions.getWithdrawalQuote(chatId);
+        console.log("Quote", quote);
+        if (!quote) {
+            await this.bot.sendMessage(
+                chatId,
+                '❌ Withdrawal quote expired. Please start over.',
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '🔄 Retry', callback_data: 'retry_withdrawal' },
+                                { text: '❌ Cancel', callback_data: 'back' }
+                            ]
+                        ]
+                    }
+                }
+            );
+            return;
+        }
+
+        try {
+            const withdrawalRequest: BankWithdrawalRequest = {
+                purposeCode: purpose,
+                quotePayload: quote.quotePayload || '',
+                quoteSignature: quote.quoteSignature || '',
+                // preferredWalletId: this.sessions.getPreferredBankAccountId(chatId) || '',
+            };
+
+            console.log("Withdrawal Request", withdrawalRequest);
+
+            const response = await this.api.sendBankWithdrawal(withdrawalRequest);
+            await this.showWithdrawalSuccess(chatId, response);
+
+        } catch (error: any) {
+            console.error('Error processing withdrawal:', error);
+            await this.bot.sendMessage(
+                chatId,
+                '❌ Failed to process withdrawal. Please try again.'
+            );
+        }
     }
 
     async showPurposeSelection(chatId: number) {
@@ -207,54 +309,33 @@ export class BankWithdrawalHandler extends BaseHandler {
         );
     }
 
-    async handlePurposeSelection(chatId: number, purpose: string) {
-        const quote = this.sessions.getWithdrawalQuote(chatId);
-        console.log("Quote", quote);
-        const bankAccount = this.sessions.getWithdrawalBankAccount(chatId);
-        if (!quote) {
-            await this.bot.sendMessage(
-                chatId,
-                '❌ Withdrawal quote expired. Please start over.'
-            );
-            return;
-        }
-
-        try {
-            const withdrawalRequest: BankWithdrawalRequest = {
-                purposeCode: purpose,
-                quotePayload: quote.quotePayload || '',
-                quoteSignature: quote.quoteSignature || '',
-                preferredWalletId: this.sessions.getPreferredBankAccountId(chatId) || '',
-            };
-
-            const response = await this.api.sendBankWithdrawal(withdrawalRequest);
-            await this.showWithdrawalSuccess(chatId, response);
-
-        } catch (error: any) {
-            console.error('Error processing withdrawal:', error);
-            await this.bot.sendMessage(
-                chatId,
-                '❌ Failed to process withdrawal. Please try again.'
-            );
-        }
-    }
+   
 
     private async showWithdrawalSuccess(chatId: number, response: any) {
         const amount = convertFromBaseUnit(Number(this.sessions.getWithdrawalAmount(chatId) || '0'));
         const formattedAmount = new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USDC'
+            currency: 'USD'
         }).format(amount);
 
-        const message = `✅ *Bank Withdrawal Initiated!*\n\n` +
-            `Amount: ${formattedAmount}\n` +
-            `Status: ${response.status}\n` +
-            `Currency: ${response.currency}\n` +
-            `PurposeCOde: ${response.purposeCode}\n` +
-            `Currency: ${response.currency}\n` +
-            `RecipientBank: ${response.destinationAccount.bankName}\n` +
-            `Transaction ID: \`${response.id}\`\n\n` +
-            `Your withdrawal is being processed. You will receive a confirmation once completed.`;
+        const message = `✅ *Bank Withdrawal Initiated!*
+            Amount: ${formattedAmount}
+
+            Status: ${response.status}
+
+            Currency: ${response.currency}
+
+            PurposeCOde: ${response.purposeCode}
+
+            Currency: ${response.currency}
+
+            RecipientBank: ${response.destinationAccount.bankName}
+
+            Transaction ID: \`${response.id}\`
+            
+            Your withdrawal is being processed. You will receive a confirmation once completed.`;
+        
+        console.log("Bank withdrawal Initiated", message);
 
         await this.bot.sendMessage(chatId, message, {
             parse_mode: 'Markdown',

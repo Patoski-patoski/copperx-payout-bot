@@ -233,7 +233,6 @@ export class CopperxApiService {
         const response = await this.api.get(`/api/kycs`);
 
         if (!response.data) throw new Error('No KYC data received');
-        console.log("KYC", response.data.data)
         return response.data;
       } catch (error: any) {
         console.error("Failed to get KYC status:", {
@@ -304,7 +303,6 @@ export class CopperxApiService {
       try {
         // Get all wallets first
         const wallets = await this.getWallets();
-        console.log("Walletsoooo", wallets);
         const walletToSet = wallets.find(w => w.id === walletId);
         if (!walletToSet) {
           throw new Error('Wallet not found');
@@ -461,7 +459,6 @@ export class CopperxApiService {
     try {
       const response = await this.getAccounts();
       const defaultAccount = response.data[0];
-      console.log("Default Account", defaultAccount);
       
       return defaultAccount || null;
     } catch (error) {
@@ -517,6 +514,9 @@ export class CopperxApiService {
   async sendBankWithdrawal(request: BankWithdrawalRequest): Promise<any> {
     try {
       const response = await this.api.post('/api/transfers/offramp', request);
+      console.log("Bank withdrawal response:", response);
+
+      
       return response.data;
     } catch (error: any) {
       console.error("Failed to send bank withdrawal:", {
@@ -532,7 +532,7 @@ export class CopperxApiService {
   async sendBulkTransfer(payload: BulkTransferPayload): Promise<any> {
     try {
       const response = await this.api.post('/api/transfers/send-batch', payload);
-      console.log("Bulk transfer response:", response.data);
+  
       return response.data;
     } catch (error: any) {
       console.error("Failed to send bulk transfer:", {

@@ -1,6 +1,8 @@
 // src/utils/copperxUtils.ts
 
 import TelegramBot from "node-telegram-bot-api";
+import { QuoteBreakdown } from "../types/copperx";
+
 
 export function convertToBaseUnit(amount: number, decimals: number = 8)
     : string {

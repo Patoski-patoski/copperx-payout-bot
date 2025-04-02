@@ -116,22 +116,6 @@ export class BotHandler {
         );
     }
 
-    private async handleMessage(msg: TelegramBot.Message) {
-        if (!msg.text) return;
-        const chatId = msg.chat.id;
-        const sessionState = this.sessions.getState(chatId);
-
-        switch (sessionState) {
-            case 'WAITING_EMAIL':
-                await this.authHandler.handleEmailInput(chatId, msg.text);
-                break;
-            default:
-                await this.bot.sendMessage(chatId,
-                    "I didn't understand that. Press /help to see available commands.");
-                break;
-        }
-    }
-
     private setupMessageHandlers() {
         this.bot.on('message', async (msg) => {
             const { chat: { id: chatId }, text } = msg;
@@ -175,8 +159,15 @@ export class BotHandler {
                 default:
                     await this.bot.sendMessage(
                         chatId,
-                        'Invalid message. I cant understand the command\n' +
-                        'Please try again or check commands using /help'
+                        '⚠ Invalid message. I can not process the command\n' +
+                        'Reasons may include:\n\n' +
+                        '1. You are offline\n' +
+                        '2. Query is too Old \n' +
+                        '3. Response timeout expired\n' +
+                        '4. Query ID is invalid\n' +
+                        '5. You are not using the right command\n\n' +
+                        'Please try again or check commands using /help',
+                        { parse_mode: 'Markdown' }
                     );
                     break;
             }
@@ -322,7 +313,9 @@ export class BotHandler {
                     return;
                 }
 
-                if (callbackQuery.data === 'withdraw') {
+                if (callbackQuery.data === 'withdraw'
+                    || callbackQuery.data === 'retry_withdrawal'
+                ) {
                     await this.bankWithdrawalHandler.handleWithdraw(callbackQuery.message);
                     return;
                 }

@@ -373,7 +373,7 @@ export class TransferHandler extends BaseHandler {
         const amount = convertFromBaseUnit(transferData?.amount || '0');
         const formattedAmount = new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: transferData?.currency || 'USDC'
+            currency: transferData?.currency || 'USD'
         }).format(amount);
 
         let successMessage = `✅ *Transfer Successful!*\n\n`;
