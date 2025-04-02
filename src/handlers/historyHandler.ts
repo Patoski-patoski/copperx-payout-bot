@@ -61,6 +61,8 @@ export class HistoryHandler extends BaseHandler {
                     '───────────────';
             }).join('\n');
 
+            console.log("formattedTransactions", formattedTransactions);
+            
             await this.bot.sendMessage(chatId,
                 `📜 *Recent Transactions*\n\n${formattedTransactions}`, {
                 parse_mode: 'Markdown',
