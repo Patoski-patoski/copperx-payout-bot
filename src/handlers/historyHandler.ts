@@ -47,7 +47,7 @@ export class HistoryHandler extends BaseHandler {
                 const date = new Date(tx.updatedAt).toLocaleString();
                 const amount = new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: tx.currency || 'USDC'
+                    currency: tx.currency || 'USD'
                 }).format(Number(tx.amount));
 
                 return `${index + 1}. ${tx.type || 'Transfer'} - ${tx.status}\n` +
