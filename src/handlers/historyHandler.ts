@@ -1,6 +1,9 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { BaseHandler } from './baseHandler';
 import {
+    convertFromBaseUnit,
+    getNetworkEmoji,
+    getNetworkName,
     offlineKeyBoardAndBack,
     offlineKeyBoardAndSend
 } from '../utils/copperxUtils';
@@ -42,27 +45,26 @@ export class HistoryHandler extends BaseHandler {
                 return;
             }
 
+            console.log("transactions", transactions.data);
             // Format the transactions for display
             const formattedTransactions = transactions.data.map((tx: any, index: number) => {
                 const date = new Date(tx.updatedAt).toLocaleString();
-                const amount = new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: tx.currency || 'USD'
-                }).format(Number(tx.amount));
+                const amount = convertFromBaseUnit(tx.amount);
+                const networkName = getNetworkName(tx.destinationAccount.network);
+                const networkEmoji = getNetworkEmoji(networkName);
 
-                return `${index + 1}. ${tx.type || 'Transfer'} - ${tx.status}\n` +
-                    `   ⏭ Type: ${tx.type}\n` +
-                    `   💰 Amount: ${amount}\n` +
-                    `   💰 Recipient bank: ${tx.sourceAccount.bankName}\n` +
-                    `   💰 Recipient account: ${tx.sourceAccount.bankAccountNumber}\n` +
-                    `   📅 Date: ${date}\n` +
-                    `   🆔 ID: ${tx.id}\n` +
+                return `${index + 1}. ${tx.type || 'Transfer'} - ${tx.status}\n\n` +
+                    `⏭ Type: ${tx.type}\n\n` +
+                    `💰 Amount: ${amount} ${tx.currency}\n\n` +
+                    `💱 Network: ${networkEmoji} ${networkName}\n\n` +
+                    `🏦 Recipient bank: ${tx.sourceAccount.bankName}\n\n` +
+                    `🧾 Recipient account: ${tx.sourceAccount.bankAccountNumber}\n\n` +
+                    `📅 Date: ${date}\n\n` +
+                    `🆔 ID: ${tx.id}\n\n` +
                     (tx.note ? `   📝 Note: ${tx.note}\n` : '') +
-                    '───────────────';
+                    '──────────────────────────────\n';
             }).join('\n');
 
-            console.log("formattedTransactions", formattedTransactions);
-            
             await this.bot.sendMessage(chatId,
                 `📜 *Recent Transactions*\n\n${formattedTransactions}`, {
                 parse_mode: 'Markdown',
