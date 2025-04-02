@@ -152,14 +152,14 @@ export class BankWithdrawalHandler extends BaseHandler {
                     '❌ Failed to get withdrawal quote.',
                     {
                        parse_mode: "Markdown",
-                       reply_markup: offlineKeyBoardAndBack("❗ Exit", "help") 
+                       reply_markup: offlineKeyBoardAndBack("🔙 Back", "back") 
                     }
                 )
                 return;
             }
             this.sessions.setWithdrawalQuote(chatId, quote);
 
-            let parsedQuotePayload, amount, toAmount, fixedFee, totalFee;
+            let parsedQuotePayload, amount, toAmount, totalFee;
 
             try {
                 parsedQuotePayload = typeof quote.quotePayload === 'string'

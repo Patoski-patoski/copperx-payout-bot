@@ -1,7 +1,6 @@
 // src/services/copperxApi
 
 import axios, { AxiosInstance } from 'axios';
-import rateLimit from 'express-rate-limit';
 import { config } from '../config/config';
 import {
   CopperxAuthResponse,
@@ -21,7 +20,6 @@ import {
 import {
   EmailOtpResponse,
 } from '../types/index';
-import { logger } from '../utils/logger';
 
 export class CopperxApiService {
   private api: AxiosInstance;
