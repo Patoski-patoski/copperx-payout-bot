@@ -1,4 +1,5 @@
-// src/handlers/botHandler.ts
+
+// src/handlers/botHandler.ts - Modified version
 import TelegramBot from 'node-telegram-bot-api';
 import { config } from '../config/config';
 import { CopperxApiService } from '../services/copperxApi';
@@ -27,16 +28,13 @@ export class BotHandler {
     private historyHandler: HistoryHandler;
     private bankWithdrawalHandler: BankWithdrawalHandler;
     private bulkTransferHandler: BulkTransferHandler;
+
     constructor() {
+        // Initialize bot without polling
         this.bot = new TelegramBot(config.telegram.botToken, {
-            polling: {
-                interval: 3000,
-                autoStart: true,
-                params: {
-                    timeout: 30
-                }
-            }
+            // No polling settings here - we'll use webhook instead
         });
+
         this.api = new CopperxApiService();
         this.sessions = new SessionManager();
 
@@ -52,9 +50,8 @@ export class BotHandler {
         this.setupCommands();
         this.setupMessageHandlers();
         this.setupCallbackHandlers();
-
-    
     }
+    
     getBot(): TelegramBot {
         return this.bot;
     }

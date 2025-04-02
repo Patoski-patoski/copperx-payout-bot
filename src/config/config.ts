@@ -1,3 +1,4 @@
+// src/config/config.ts - Updated with webhook URL config
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,6 +15,7 @@ export const config = {
     app: {
         port: process.env.PORT || 3000,
         nodeEnv: process.env.NODE_ENV || 'development',
+        webhookUrl: process.env.WEBHOOK_URL || '', // Add this for the webhook URL
     },
 } as const;
 
@@ -23,4 +25,4 @@ for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {
         throw new Error(`Missing required environment variable: ${envVar}`);
     }
-} 
+}
