@@ -269,9 +269,10 @@ export class BulkTransferHandler extends BaseHandler {
                 inline_keyboard: [
                     [
                         { text: '💸 Confirm & Send', callback_data: 'bulk_confirm' },
-                        { text: '❌ Cancel', callback_data: 'bulk_cancel' }
+                        { text: '❌ Cancel Bulk', callback_data: 'bulk_cancel' }
                     ],
                     [
+                        { text: '➕ Add recipient', callback_data: 'add_recipient' },
                         { text: '🔙 Back', callback_data: 'help' }
                     ]
                 ]
