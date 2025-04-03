@@ -94,7 +94,16 @@ export class BulkTransferHandler extends BaseHandler {
             if (recipients.has(recipient)) {
                 await this.bot.sendMessage(
                     chatId,
-                    `⚠️ Duplicate recipient found: ${recipient}`
+                    `⚠️ Duplicate recipient found: ${recipient}`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '🔙 Back', callback_data: 'back' },
+                                ],
+                            ]
+                        }
+                    }
                 );
                 return false;
             }
@@ -274,7 +283,8 @@ export class BulkTransferHandler extends BaseHandler {
                     [
                         { text: '➕ Add recipient', callback_data: 'add_recipient' },
                         { text: '🔙 Back', callback_data: 'help' }
-                    ]
+                    ],
+                    
                 ]
            }
         });
