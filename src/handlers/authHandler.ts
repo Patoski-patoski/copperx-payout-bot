@@ -28,8 +28,6 @@ export class AuthHandler extends BaseHandler {
             return;
         }
 
-        const keyboard = [[{ text: 'Back', callback_data: 'start' }]]
-        
         await this.bot.sendMessage(
             chatId,
             this.BOT_MESSAGES.ENTER_EMAIL, {
@@ -44,44 +42,6 @@ export class AuthHandler extends BaseHandler {
         this.sessions.setState(chatId, 'WAITING_EMAIL');
     }
 
-    async handleLogout(msg: TelegramBot.Message) {
-        const { chat: { id: chatId } } = msg;
-
-        if (!this.sessions.isAuthenticated(chatId)) {
-            const errorMessage = await this.bot.sendMessage(
-                chatId,
-                this.BOT_MESSAGES.NOT_LOGGED_IN,
-                {
-                    parse_mode: 'Markdown',
-                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
-                }
-            );
-            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
-            return;
-        }
-        // Disconnect notifications
-        this.sessions.removeNotificationService(chatId);
-        this.sessions.clearSession(chatId);
-        await this.bot.sendMessage(
-            chatId,
-            this.BOT_MESSAGES.LOGOUT_SUCCESS
-        );
-    }
-
-    async handleExit(msg: TelegramBot.Message) {
-        const { chat: { id: chatId } } = msg;
-        if (!this.sessions.isAuthenticated(chatId)) {
-            const errorMessage = await this.bot.sendMessage(
-                chatId,
-                this.BOT_MESSAGES.NOT_LOGGED_IN
-            );
-            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
-            return;
-        }
-        this.sessions.clearSession(chatId);
-        await this.bot.deleteMessage(chatId, msg.message_id);
-        await this.bot.sendMessage(chatId, this.BOT_MESSAGES.EXIT);
-    }
 
     // Handle email input
     async handleEmailInput(chatId: number, email: string) {
@@ -222,12 +182,48 @@ export class AuthHandler extends BaseHandler {
                 }
             }
 
-            // Rest of your existing code...
-            await this.bot.sendMessage(chatId, this.BOT_MESSAGES.LOGIN_SUCCESS);
-
         } catch (error) {
             console.error('Error in handleSuccessfulLogin:', error);
             await this.bot.sendMessage(chatId, "Unable to Login");
         }
+    }
+
+       async handleLogout(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+
+        if (!this.sessions.isAuthenticated(chatId)) {
+            const errorMessage = await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.NOT_LOGGED_IN,
+                {
+                    parse_mode: 'Markdown',
+                    reply_markup: offlineKeyBoardAndBack('🔓Login', 'login')
+                }
+            );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
+            return;
+        }
+        // Disconnect notifications
+        this.sessions.removeNotificationService(chatId);
+        this.sessions.clearSession(chatId);
+        await this.bot.sendMessage(
+            chatId,
+            this.BOT_MESSAGES.LOGOUT_SUCCESS
+        );
+    }
+
+    async handleExit(msg: TelegramBot.Message) {
+        const { chat: { id: chatId } } = msg;
+        if (!this.sessions.isAuthenticated(chatId)) {
+            const errorMessage = await this.bot.sendMessage(
+                chatId,
+                this.BOT_MESSAGES.NOT_LOGGED_IN
+            );
+            clearErrorMessage(this.bot, chatId, errorMessage.message_id);
+            return;
+        }
+        this.sessions.clearSession(chatId);
+        await this.bot.deleteMessage(chatId, msg.message_id);
+        await this.bot.sendMessage(chatId, this.BOT_MESSAGES.EXIT);
     }
 } 
