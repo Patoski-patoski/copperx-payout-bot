@@ -9,10 +9,11 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 - **User Authentication**: Secure login with email OTP verification
 - **Wallet Management**: View wallets across multiple networks, set default wallet
 - **Balance Tracking**: Check balances for all assets across wallets
-- **Fund Transfers**: Send funds to email addresses with various purpose codes
+- **Fund Transfers**: Send funds to email addresses or walletAddress with various purpose codes
 - **Transaction History**: View recent transaction history
 - **KYC Verification**: Check KYC status and complete verification process
 - **Profile Management**: View and manage your Copperx account details
+- **Deposit Notifications**: Send notification upon deposits to  to email addresses
 
 ## 🤖 Available Commands
 
@@ -32,6 +33,7 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 | /review | Review recipients of the bulk transfer |
 | /cancel_bulk | Stop bulk transfer |
 | /history | View transaction history |
+| /notifications | Toggle notifications upon deposits |
 | /commands | View available commands |
 | /kyc | Check KYC status |
 | /help | Get commands and info |
@@ -59,9 +61,11 @@ src/
 │   ├── transferHandler.ts       # Transfer payment functionality
 │   ├── historyHandler.ts        # Transaction history
 │   ├── index.ts                 # Exports all handlers
+│   ├── notificationHandler.ts   # Handles notifications upon deposts
 │   └── walletHandler.ts         # Wallet management
 ├── services/
 │   └── copperxApi.ts            # API communication service
+│   └── notificationService.ts   # Deposit notification service
 ├── types/
 │   └── copperx.ts               # TypeScript interfaces for API
 │   └── index.ts                 # TypeScript interfaces
