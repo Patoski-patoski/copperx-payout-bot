@@ -1,7 +1,6 @@
 # Copperx Telegram Bot
 
-![Copperx Logo](https://github.com/Patoski-patoski/copperx-payout-bot/img/logo.png)
-![Copperx Logo](/img/logo.jpg)
+<img src="/img/logo.jpg" style="width:150px;height:150px;" alt="Copperx Logo">
 
 A Telegram bot for managing Copperx Payout wallets, transfers, and account services.
 
