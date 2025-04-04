@@ -542,5 +542,4 @@ export class CopperxApiService {
     }
   }
 
-
 } 

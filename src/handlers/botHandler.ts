@@ -11,6 +11,7 @@ import { ProfileHandler } from './profileHandler';
 import { HistoryHandler } from './historyHandler';
 import { BankWithdrawalHandler } from './bankWithdrawalHandler';
 import { BulkTransferHandler } from './bulkTransferHandler';
+import { NotificationHandler } from './notificationHandler';
 import { BOT_MESSAGES } from '../utils/messageTemplates';
 import { TransferType } from '@/types/copperx';
 import { clearErrorMessage, keyboard } from '../utils/copperxUtils';
@@ -28,11 +29,12 @@ export class BotHandler {
     private historyHandler: HistoryHandler;
     private bankWithdrawalHandler: BankWithdrawalHandler;
     private bulkTransferHandler: BulkTransferHandler;
+    private notificationHandler: NotificationHandler;
 
     constructor() {
         // Initialize bot without polling
         this.bot = new TelegramBot(config.telegram.botToken, {
-            // No polling settings here - we'll use webhook instead
+            // No polling settings here - we'll use webhook 🎣 instead
         });
 
         this.api = new CopperxApiService();
@@ -46,6 +48,7 @@ export class BotHandler {
         this.historyHandler = new HistoryHandler(this.bot, this.api, this.sessions);
         this.bankWithdrawalHandler = new BankWithdrawalHandler(this.bot, this.api, this.sessions);
         this.bulkTransferHandler = new BulkTransferHandler(this.bot, this.api, this.sessions);
+        this.notificationHandler = new NotificationHandler(this.bot, this.api, this.sessions);
 
         this.setupCommands();
         this.setupMessageHandlers();
@@ -73,7 +76,10 @@ export class BotHandler {
             { command: /\/withdraw/, handler: this.bankWithdrawalHandler.handleWithdraw.bind(this.bankWithdrawalHandler) },
             { command: /\/bulk/, handler: this.bulkTransferHandler.handleBulkTransfer.bind(this.bulkTransferHandler) },
             { command: /\/add_recipient/, handler: this.bulkTransferHandler.handleAddRecipient.bind(this.bulkTransferHandler) },
-            { command: /\/review/, handler: this.bulkTransferHandler.handleReview.bind(this.bulkTransferHandler) }
+            { command: /\/review/, handler: this.bulkTransferHandler.handleReview.bind(this.bulkTransferHandler) },
+            { command: /\/commands/, handler: this.handleHelp.bind(this) },
+            { command: /\/notifications/, handler: this.notificationHandler.handleNotifications.bind(this.notificationHandler) },
+            
         ];
 
 

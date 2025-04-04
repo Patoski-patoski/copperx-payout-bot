@@ -8,6 +8,7 @@ import {
     offlineKeyBoardAndBack,
     clearErrorMessage
 } from '../utils/copperxUtils';
+import { NotificationService } from '../services/notificationService';
 
 export class AuthHandler extends BaseHandler {
     async handleLogin(msg: TelegramBot.Message) {
@@ -58,6 +59,8 @@ export class AuthHandler extends BaseHandler {
             clearErrorMessage(this.bot, chatId, errorMessage.message_id);
             return;
         }
+        // Disconnect notifications
+        this.sessions.removeNotificationService(chatId);
         this.sessions.clearSession(chatId);
         await this.bot.sendMessage(
             chatId,
@@ -185,10 +188,46 @@ export class AuthHandler extends BaseHandler {
     // Update session after login
     updateSessionAfterLogin(chatId: number,
         authResponse: CopperxAuthResponse) {
+        this.handleSuccessfulLogin(chatId, authResponse);
 
         this.sessions.setToken(chatId, authResponse.accessToken);
         this.sessions.setState(chatId, 'AUTHENTICATED');
         this.sessions.setOrganizationId(chatId, authResponse.user.organizationId);
         this.sessions.setUserId(chatId, authResponse.user.id);
+    }
+
+    async handleSuccessfulLogin(chatId: number, authData: CopperxAuthResponse) {
+        try {
+            // Store token and user info
+            this.sessions.setToken(chatId, authData.accessToken);
+            this.sessions.setState(chatId, 'AUTHENTICATED');
+
+            // Fetch user profile to get organization ID
+            const userProfile = await this.api.getUserProfile();
+            if (userProfile && userProfile.organizationId) {
+                this.sessions.setOrganizationId(chatId, userProfile.organizationId);
+
+                // Initialize notification service
+                const token = this.sessions.getToken(chatId);
+                const orgId = this.sessions.getOrganizationId(chatId);
+                if (token && orgId) {
+                    const notificationService = new NotificationService(
+                        this.bot,
+                        chatId,
+                        orgId,
+                        token
+                    );
+                    this.sessions.setNotificationService(chatId, notificationService);
+                    notificationService.connect();
+                }
+            }
+
+            // Rest of your existing code...
+            await this.bot.sendMessage(chatId, this.BOT_MESSAGES.LOGIN_SUCCESS);
+
+        } catch (error) {
+            console.error('Error in handleSuccessfulLogin:', error);
+            await this.bot.sendMessage(chatId, "Unable to Login");
+        }
     }
 } 

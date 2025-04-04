@@ -1,6 +1,7 @@
 // src/utils/sessionManager.ts
 
 import { BulkTransferRequest, TransferType } from "@/types/copperx";
+import { NotificationService } from "@/services/notificationService";
 
 interface BankAccountInfo {
     id: string;
@@ -430,8 +431,31 @@ export class SessionManager {
     getHistoryPageSize(chatId: number): number | undefined {
         return this.sessions.get(chatId)?.historyPageSize;
     }
-    // clear the session
+
+   
+    // Store a reference to the notification service
+    private notificationServices: Map<number, NotificationService> = new Map();
+
+    setNotificationService(chatId: number, service: NotificationService) {
+        this.notificationServices.set(chatId, service);
+    }
+
+    getNotificationService(chatId: number): NotificationService | null {
+        return this.notificationServices.get(chatId) || null;
+    }
+
+    removeNotificationService(chatId: number) {
+        const service = this.notificationServices.get(chatId);
+        if (service) {
+            service.disconnect();
+            this.notificationServices.delete(chatId);
+        }
+    }
+
+    // Update the clearSession method to disconnect notifications
     clearSession(chatId: number) {
+        this.removeNotificationService(chatId);
         this.sessions.delete(chatId);
     }
+ 
 } 

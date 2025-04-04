@@ -49,7 +49,8 @@ export class BaseHandler {
                 { command: 'review', description: 'Review bulk recipient' },
                 { command: 'history', description: 'View transaction history' },
                 { command: 'kyc', description: 'Check KYC status' },
-                { command: 'help', description: 'Get commands and info' }
+                { command: 'help', description: 'Get commands and info' },
+                { command: 'notifications', description: 'Toggle deposit notifications' }
             ]);
         } catch (error) {
             console.error('Error setting up bot commands:', error);
