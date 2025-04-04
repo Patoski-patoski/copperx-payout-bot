@@ -45,6 +45,8 @@ export class BaseHandler {
                 { command: 'send', description: 'Initiate a transfer' },
                 { command: 'withdraw', description: 'Start bank withdrawal' },
                 { command: 'bulk', description: 'Start bulk transfer' },
+                { command: 'add_recipent', description: 'Add recipient to bulk transfer' },
+                { command: 'review', description: 'Review bulk recipient' },
                 { command: 'history', description: 'View transaction history' },
                 { command: 'kyc', description: 'Check KYC status' },
                 { command: 'help', description: 'Get commands and info' }
