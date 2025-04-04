@@ -16,6 +16,7 @@ export class BaseHandler {
         this.bot = bot;
         this.api = api;
         this.sessions = sessions;
+        this.setupBotCommands(); 
     }
 
     // Shared utility methods
@@ -29,5 +30,27 @@ export class BaseHandler {
         };
 
         return statusMap[status.toLowerCase()] || `❓ ${status}`;
+    }
+
+    protected async setupBotCommands() {
+        try {
+            await this.bot.setMyCommands([
+                { command: 'start', description: 'Initialize the bot' },
+                { command: 'login', description: 'Start authentication process' },
+                { command: 'logout', description: 'End current session' },
+                { command: 'profile', description: 'View user profile' },
+                { command: 'wallets', description: 'List all wallets' },
+                { command: 'balance', description: 'Check wallet balance' },
+                { command: 'default', description: 'View default wallet' },
+                { command: 'send', description: 'Initiate a transfer' },
+                { command: 'withdraw', description: 'Start bank withdrawal' },
+                { command: 'bulk', description: 'Start bulk transfer' },
+                { command: 'history', description: 'View transaction history' },
+                { command: 'kyc', description: 'Check KYC status' },
+                { command: 'help', description: 'Get commands and info' }
+            ]);
+        } catch (error) {
+            console.error('Error setting up bot commands:', error);
+        }
     }
 }
