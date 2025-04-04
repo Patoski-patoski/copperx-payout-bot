@@ -1,6 +1,7 @@
 # Copperx Telegram Bot
 
-![Copperx Logo](https://payout.copperx.io/logo.png)
+![Copperx Logo](https://github.com/Patoski-patoski/copperx-payout-bot/img/logo.png)
+![Copperx Logo](/img/logo.jpg)
 
 A Telegram bot for managing Copperx Payout wallets, transfers, and account services.
 
@@ -30,8 +31,9 @@ A Telegram bot for managing Copperx Payout wallets, transfers, and account servi
 | /bulk | Start bulk transfer |
 | /add_recipient | Add the recipient for bulk transfer |
 | /review | Review recipients of the bulk transfer |
-| /bulk | Start bulk transfer |
+| /cancel_bulk | Stop bulk transfer |
 | /history | View transaction history |
+| /commands | View available commands |
 | /kyc | Check KYC status |
 | /help | Get commands and info |
 
@@ -109,8 +111,15 @@ src/
 
    ```bash
    TELEGRAM_BOT_TOKEN=your_bot_token
-   API_BASE_URL=https://api.copperx.io
    NODE_ENV=development
+   WEBHOOK_URL="your-webHook-url" (--optional if you configgured with webHook)
+   TELEGRAM_BOT_TOKEN=7531807759:AAHsGe7WF0h5oXg_vncWsNM6ejbf5po7Ez4
+
+   COPPERX_API_BASE_URL=https://income-api.copperx.io
+   COPPERX_PUSHER_KEY=e089376087cac1a62785
+   COPPERX_PUSHER_CLUSTER=ap1
+
+   NODE_ENV=production
    ```
 
 4. Start the bot
@@ -147,7 +156,11 @@ npm run test:ci  # Run tests in CI environment
 5. Add environment variables:
    - `BOT_TOKEN`: Your Telegram bot token
    - `NODE_ENV`: Set to `production`
-   - `API_BASE_URL`: Your API URL
+   - `WEBHOOK_URL`: Your web hook url
+   - `COPPERX_BASE_URL`: `https://income-api.copperx.io`
+   - `COPPERX_PUSHER_CLUSTER`: `ap1`
+   - `COPPERX_PUSHER_KEY`: `e089376087cac1a62785`
+  
 6. Deploy!
 
 ### Monitoring
