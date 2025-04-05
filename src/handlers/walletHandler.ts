@@ -51,7 +51,7 @@ export class WalletHandler extends BaseHandler {
                 await this.bot.deleteMessage(chatId, loadingMessage.message_id);
                 const errorMessage = await this.bot.sendMessage(
                     chatId,
-                    `⚠️ OOps.. Failed to fetch wallets. Please try again later.`
+                    `⚠️ Oops.. Failed to fetch wallets. Please try again later.`
                 );
                 clearErrorMessage(this.bot, chatId, errorMessage.message_id);
                 return; // Exit early if fetching wallets fails
@@ -83,7 +83,7 @@ export class WalletHandler extends BaseHandler {
                         const networkEmoji = getNetworkEmoji(networkName);
 
                         const walletMessage = `*Network*: ${networkEmoji} ${networkName.toUpperCase()}\n\n` +
-                            `*📝Wallet Address*:\n\`\`\`\n${wallet.walletAddress}\n\`\`\`\n\n` +
+                            `*📝Wallet Address*:\n\`\`\`\n${wallet.walletAddress}\n\`\`\`\n` +
                             `💼 *Type*: \`${wallet.walletType.toUpperCase()}\``;
 
                         // Create different button based on default status
