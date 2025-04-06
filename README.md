@@ -1,4 +1,7 @@
-# Copperx Telegram Bot
+# Copperx Telegram Bot: 
+
+*Bot URL*: https://t.me/patoski_tel_bot
+
 
 <img src="/img/logo.jpg" style="width:150px;height:150px;" alt="Copperx Logo">
 
