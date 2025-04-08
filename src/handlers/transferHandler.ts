@@ -47,7 +47,6 @@ export class TransferHandler extends BaseHandler {
 
     }
 
-    // Add this method to handle transfer type selection
     async handleTransferTypeSelection(chatId: number, type: TransferType) {
         this.sessions.setTransferType(chatId, type);
 

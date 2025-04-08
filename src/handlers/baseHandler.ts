@@ -36,6 +36,7 @@ export class BaseHandler {
         try {
             await this.bot.setMyCommands([
                 { command: 'start', description: 'Initialize the bot' },
+                
                 { command: 'login', description: 'Start authentication process' },
                 { command: 'logout', description: 'End current session' },
                 { command: 'profile', description: 'View user profile' },
