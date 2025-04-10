@@ -30,7 +30,9 @@ export class CopperxApiService {
   private readonly RETRY_DELAY = 2000;
   private rateLimit: Map<string, number[]>;
 
-
+  /**
+   * Constructor for the CopperxApiService
+   */
   constructor() {
     this.api = axios.create({
       baseURL: config.copperx.apiBaseUrl,
@@ -78,6 +80,12 @@ export class CopperxApiService {
   }
 
   // Update retry method to handle rate limit errors
+  /**
+   * Retry an operation
+   * @param operation - The operation to retry
+   * @param fn - The function to retry
+   * @returns A promise that resolves to the result of the function
+   */
   async retry(operation: string, fn: () => Promise<any>) {
     let lastError;
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
@@ -109,7 +117,12 @@ export class CopperxApiService {
     console.error(`${operation}: All retry attempts failed:`, lastError);
     throw lastError;
   }
-  
+
+  /**
+   * Check if an error is retryable
+   * @param error - The error to check
+   * @returns A boolean indicating if the error is retryable
+   */
   private isRetryableError(error: any): boolean {
     const retryableCodes = ['ETIMEDOUT', 'ECONNABORTED', 'ECONNREFUSED'];
     const retryableMessages = ['timeout', 'Network Error'];
@@ -125,6 +138,11 @@ export class CopperxApiService {
     this.api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
+  /**
+   * Format an error
+   * @param error - The error to format
+   * @returns A formatted error
+   */
   private formatError(error: any): Error {
     if (error.code === 'ETIMEDOUT') {
       return new Error('Connection timed out. Please try again.');
@@ -145,6 +163,11 @@ export class CopperxApiService {
     );
   }
 
+  /**
+   * Check the rate limit for a given endpoint
+   * @param endpoint - The endpoint to check the rate limit for
+   * @returns A promise that resolves to void
+   */
   private async checkRateLimit(endpoint: string): Promise<void> {
     const now = Date.now();
     const key = endpoint;
@@ -165,6 +188,11 @@ export class CopperxApiService {
   }
 
   // Authentication methods
+  /**
+   * Request an email OTP
+   * @param email - The email to request the OTP for
+   * @returns A promise that resolves to the email OTP response
+   */
   async requestEmailOtp(email: string): Promise<EmailOtpResponse> {
     return this.retry('Request Email OTP', async () => {
       try {
@@ -181,7 +209,13 @@ export class CopperxApiService {
     });
   }
 
-
+  /**
+   * Verify an email OTP
+   * @param email - The email to verify
+   * @param otp - The OTP to verify
+   * @param sid - The session ID
+   * @returns A promise that resolves to the authentication response
+   */
   async verifyEmailOtp(email: string, otp: string, sid: string)
     : Promise<CopperxAuthResponse> {
     return this.retry('Verify Email OTP', async () => {
@@ -205,6 +239,10 @@ export class CopperxApiService {
     });
   }
 
+  /**
+   * Get the user profile
+   * @returns A promise that resolves to the user profile
+   */
   async getUserProfile(): Promise<CopperxUser> {
     return this.retry('Get User Profile', async () => {
       try {
@@ -225,6 +263,10 @@ export class CopperxApiService {
     });
   }
 
+  /**
+   * Get the KYC status
+   * @returns A promise that resolves to the KYC status
+   */
   async getKycStatus(): Promise<any> {
     return this.retry('Get KYC Status', async () => {
       try {
@@ -254,7 +296,10 @@ export class CopperxApiService {
 
 
   // Wallets
-  // Get all wallets
+  /**
+   * Get all wallets
+   * @returns A promise that resolves to the wallets
+   */
   async getWallets(): Promise<CopperxWallet[]> {
     return this.retry('Get Wallets', async () => {
       try {
@@ -275,6 +320,10 @@ export class CopperxApiService {
     });
   }
 
+  /**
+   * Get the balances of all wallets
+   * @returns A promise that resolves to the wallet balances
+   */
   async getWalletBalances(): Promise<CopperxWalletBalance[]> {
     return this.retry('Get Wallet Balances', async () => {
     try {
@@ -295,7 +344,11 @@ export class CopperxApiService {
   });
   }
 
-  // Set default wallet
+  /**
+   * Set the default wallet
+   * @param walletId - The ID of the wallet to set as default
+   * @returns A promise that resolves to the default wallet
+   */
   async setDefaultWallet(walletId: string): Promise<CopperxWallet> {
     return this.retry('Set Default Wallet', async () => {
       try {
@@ -337,6 +390,11 @@ export class CopperxApiService {
     });
   }
 
+  /**
+   * Ensure a single default wallet
+   * @param network - The network of the wallet to ensure
+   * @returns A promise that resolves to void
+   */
   async ensureSingleDefaultWallet(network: string): Promise<void> {
     return this.retry('Ensure Single Default Wallet', async () => {
       try {
@@ -368,6 +426,12 @@ export class CopperxApiService {
     });
   }
 
+  /**
+   * Get a wallet by address
+   * @param walletAddress - The address of the wallet to get
+   * @param network - The network of the wallet to get
+   * @returns A promise that resolves to the wallet or null if not found
+   */
   async getWalletByAddress(walletAddress: string, network: string):
     Promise<CopperxWallet | null> {
     return this.retry('Get Wallet by Address', async () => {
@@ -388,7 +452,10 @@ export class CopperxApiService {
   });
   }
 
-  // Get default walletAddress
+  /**
+   * Get the default wallet
+   * @returns A promise that resolves to the default wallet
+   */
   async getDefaultWallet(): Promise<CopperxWallet> {
     return this.retry('Get Default Wallet', async () => {
       try {
@@ -412,7 +479,13 @@ export class CopperxApiService {
   }
 
   // Transactions
-  // Get all transactions
+
+  /**
+   * Get all transactions
+   * @param page - The page number to fetch
+   * @param limit - The number of transactions per page
+   * @returns A promise that resolves to the transactions history
+   */
   async getTransactionsHistory(page: number = 1, limit: number = 10) {
     return this.retry('Get Transactions History', async () => {
       try {
@@ -434,6 +507,10 @@ export class CopperxApiService {
     });
   }
 
+  /**
+   * Get all accounts
+   * @returns A promise that resolves to the accounts
+   */
   async getAccounts(): Promise<AccountsResponse> {
     return this.retry('Get Accounts', async () => {
       try {
@@ -453,6 +530,10 @@ export class CopperxApiService {
     });
   }
 
+  /**
+   * Get the default bank account
+   * @returns A promise that resolves to the default bank account
+   */
   async getDefaultBankAccount(): Promise<CopperxAccount | null> {
     try {
       const response = await this.getAccounts();
@@ -465,7 +546,12 @@ export class CopperxApiService {
     }
   }
 
-
+  /**
+   * Send a transfer
+   * @param request - The request to send
+   * @param type - The type of transfer to send
+   * @returns A promise that resolves to the transfer response
+   */
   async sendTransfer(request: EmailTransferRequest | WalletWithdrawalRequest,
     type: 'email' | 'wallet') {
     try {
@@ -494,6 +580,11 @@ export class CopperxApiService {
     }
   }
 
+  /**
+   * Get an offramp quote
+   * @param request - The request to get the quote
+   * @returns A promise that resolves to the quote
+   */
   async getOffRampQuote(request: OffRampQuoteRequest): Promise<any> {
     try {
       const response = await this.api.post('/api/quotes/offramp', request);
@@ -509,6 +600,11 @@ export class CopperxApiService {
     }
   }
 
+  /**
+   * Send a bank withdrawal
+   * @param request - The request to send
+   * @returns A promise that resolves to the withdrawal response
+   */
   async sendBankWithdrawal(request: BankWithdrawalRequest): Promise<any> {
     try {
       const response = await this.api.post('/api/transfers/offramp', request);
@@ -527,6 +623,11 @@ export class CopperxApiService {
     }
   }
 
+  /**
+   * Send a bulk transfer
+   * @param payload - The payload to send
+   * @returns A promise that resolves to the bulk transfer response
+   */
   async sendBulkTransfer(payload: BulkTransferPayload): Promise<any> {
     try {
       const response = await this.api.post('/api/transfers/send-batch', payload);
