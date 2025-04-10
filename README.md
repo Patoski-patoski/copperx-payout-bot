@@ -118,8 +118,8 @@ src/
    ```bash
    TELEGRAM_BOT_TOKEN=your_bot_token
    NODE_ENV=development
-   WEBHOOK_URL="your-webHook-url" (--optional if you configgured with webHook)
-   TELEGRAM_BOT_TOKEN=7531807759:AAHsGe7WF0h5oXg_vncWsNM6ejbf5po7Ez4
+   WEBHOOK_URL="your-webHook-url" (--optional if you configured with webHook)
+   TELEGRAM_BOT_TOKEN=your-bot-token
 
    COPPERX_API_BASE_URL=https://income-api.copperx.io
    COPPERX_PUSHER_KEY=e089376087cac1a62785
