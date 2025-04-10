@@ -104,7 +104,7 @@ src/
 
    ```bash
    git clone https://github.com/patoski-patoski/copperx-payout-bot
-   cd copperx-telegram-bot
+   cd copperx-payout-bot
    ```
 
 2. Install dependencies
